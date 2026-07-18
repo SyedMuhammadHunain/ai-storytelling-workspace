@@ -401,14 +401,14 @@
 
 ## Phase 5: Assembly & Finalization
 
-### Task 16: Implement Front/Back Matter Agents
+### Task 16: Implement Front/Back Matter Agents ✅ COMPLETED
 
 **Description:** Mock agents for title page, copyright, TOC, acknowledgments, author bio.
 
 **Acceptance criteria:**
-- [ ] Front Matter Agent generates title page, copyright, TOC
-- [ ] Back Matter Agent generates acknowledgments, author bio
-- [ ] Both update Story Bible with their content
+- [x] Front Matter Agent generates title page, copyright, TOC
+- [x] Back Matter Agent generates acknowledgments, author bio
+- [x] Both update Story Bible with their content
 
 **Verification:**
 - [ ] Tests pass: `pytest tests/test_agents/test_matter.py`
@@ -425,15 +425,15 @@
 
 ---
 
-### Task 17: Implement Compilation Agent
+### Task 17: Implement Compilation Agent ✅ COMPLETED
 
 **Description:** Mock agent that assembles all chapters and matter into a single manuscript.
 
 **Acceptance criteria:**
-- [ ] Collects all chapters in order
-- [ ] Adds front and back matter
-- [ ] Generates final manuscript text
-- [ ] Updates Story Bible with compilation metadata
+- [x] Collects all chapters in order
+- [x] Adds front and back matter
+- [x] Generates final manuscript text
+- [x] Updates Story Bible with compilation metadata
 
 **Verification:**
 - [ ] Tests pass: `pytest tests/test_agents/test_compilation.py`
@@ -449,15 +449,15 @@
 
 ---
 
-### Task 18: Implement QA Agent
+### Task 18: Implement QA Agent ✅ COMPLETED
 
 **Description:** Mock agent that validates manuscript completeness (no missing chapters, no TODOs).
 
 **Acceptance criteria:**
-- [ ] Checks for missing chapters
-- [ ] Checks for placeholder markers
-- [ ] Validates Story Bible completeness
-- [ ] Generates QA report
+- [x] Checks for missing chapters
+- [x] Checks for placeholder markers
+- [x] Validates Story Bible completeness
+- [x] Generates QA report
 
 **Verification:**
 - [ ] Tests pass: `pytest tests/test_agents/test_qa.py`
@@ -473,15 +473,15 @@
 
 ---
 
-### Task 19: Implement Export Agent
+### Task 19: Implement Export Agent ✅ COMPLETED
 
 **Description:** Mock agent that outputs manuscript to files (TXT, JSON).
 
 **Acceptance criteria:**
-- [ ] Exports manuscript to text file
-- [ ] Exports Story Bible to JSON file
-- [ ] Creates output directory if needed
-- [ ] Logs export paths
+- [x] Exports manuscript to text file
+- [x] Exports Story Bible to JSON file
+- [x] Creates output directory if needed
+- [x] Logs export paths
 
 **Verification:**
 - [ ] Tests pass: `pytest tests/test_agents/test_export.py`

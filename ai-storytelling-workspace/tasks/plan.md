@@ -64,10 +64,10 @@ Building a Python CLI orchestrator that demonstrates the 15-agent workflow for A
 
 ### Phase 5: Assembly & Finalization (Tasks 16-19)
 
-- [ ] **Task 16:** Implement Front/Back Matter Agents (title page, TOC, etc.)
-- [ ] **Task 17:** Implement Compilation Agent (assembles manuscript)
-- [ ] **Task 18:** Implement QA Agent (validates completeness)
-- [ ] **Task 19:** Implement Export Agent (outputs to files)
+- [x] **Task 16:** Implement Front/Back Matter Agents (title page, TOC, etc.)
+- [x] **Task 17:** Implement Compilation Agent (assembles manuscript)
+- [x] **Task 18:** Implement QA Agent (validates completeness)
+- [x] **Task 19:** Implement Export Agent (outputs to files)
 
 **Checkpoint: Assembly**
 - [ ] Full manuscript can be compiled
