@@ -235,3 +235,92 @@ def test_orchestrator_phase_4_assembly(mock_input):
         assert result is True
         assert "front_matter" in orchestrator.bible.metadata
         assert "back_matter" in orchestrator.bible.metadata
+
+
+
+
+@patch('builtins.input', side_effect=['1', '1', '1', '1', '1', '1'])
+def test_orchestrator_handles_agent_exception_in_phase_1(mock_input):
+    """Test WorkflowOrchestrator handles agent exception in Phase 1."""
+    orchestrator = WorkflowOrchestrator(project_name="Test Book")
+    
+    # Mock an agent to raise an exception
+    with patch('storytelling_workspace.agents.intake.IntakeAgent.execute', side_effect=Exception("Agent failure")):
+        result = orchestrator.execute()
+        
+        # Should return False due to exception
+        assert result is False
+
+
+@patch('builtins.input', side_effect=['1', '1', '1', '1', '1', '1'])
+def test_orchestrator_handles_agent_exception_in_phase_2(mock_input):
+    """Test WorkflowOrchestrator handles agent exception in Phase 2."""
+    orchestrator = WorkflowOrchestrator(project_name="Test Book")
+    
+    # Mock plot architect to raise an exception
+    with patch('storytelling_workspace.agents.plot_architect.PlotArchitectAgent.execute', side_effect=Exception("Plot failure")):
+        result = orchestrator.execute()
+        
+        # Should return False due to exception
+        assert result is False
+
+
+@patch('builtins.input', side_effect=['1', '1', '1', '1', '1', '1'])
+def test_orchestrator_handles_agent_exception_in_phase_3(mock_input):
+    """Test WorkflowOrchestrator handles agent exception in Phase 3."""
+    orchestrator = WorkflowOrchestrator(project_name="Test Book")
+    
+    # Mock dialogue/voice agent to raise an exception
+    with patch('storytelling_workspace.agents.dialogue_voice.DialogueVoiceAgent.execute', side_effect=Exception("Editing failure")):
+        result = orchestrator.execute()
+        
+        # Should return False due to exception
+        assert result is False
+
+
+@patch('builtins.input', side_effect=['1', '1', '1', '1', '1', '1'])
+def test_orchestrator_handles_agent_exception_in_phase_4(mock_input):
+    """Test WorkflowOrchestrator handles agent exception in Phase 4."""
+    orchestrator = WorkflowOrchestrator(project_name="Test Book")
+    
+    # Mock front matter agent to raise an exception
+    with patch('storytelling_workspace.agents.front_matter.FrontMatterAgent.execute', side_effect=Exception("Assembly failure")):
+        result = orchestrator.execute()
+        
+        # Should return False due to exception
+        assert result is False
+
+
+@patch('builtins.input', side_effect=['1', '1', '1', '1', '1', '1'])
+def test_orchestrator_handles_checkpoint_exception(mock_input):
+    """Test WorkflowOrchestrator handles checkpoint exception."""
+    orchestrator = WorkflowOrchestrator(project_name="Test Book")
+    
+    # Mock checkpoint to raise an exception
+    with patch('storytelling_workspace.checkpoint.Checkpoint.execute', side_effect=Exception("Checkpoint failure")):
+        result = orchestrator.execute()
+        
+        # Should return False due to exception
+        assert result is False
+
+
+@patch('builtins.input', side_effect=['1', '1', '1', '1', '1', '1'])
+def test_orchestrator_handles_export_failure(mock_input):
+    """Test WorkflowOrchestrator handles export directory creation failure."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create a file where the output directory should be
+        output_path = os.path.join(tmpdir, "output")
+        with open(output_path, "w") as f:
+            f.write("blocking file")
+        
+        orchestrator = WorkflowOrchestrator(
+            project_name="Test Book",
+            output_dir=output_path
+        )
+        
+        # Mock the export agent to raise an exception when trying to create directory
+        with patch('storytelling_workspace.agents.export.ExportAgent.execute', side_effect=Exception("Cannot create directory")):
+            result = orchestrator.execute()
+            
+            # Should return False due to exception
+            assert result is False
