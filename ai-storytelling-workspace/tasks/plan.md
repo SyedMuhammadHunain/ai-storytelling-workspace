@@ -53,10 +53,10 @@ Building a Python CLI orchestrator that demonstrates the 15-agent workflow for A
 
 ### Phase 4: Editing Agents (Tasks 12-15)
 
-- [ ] **Task 12:** Implement Dialogue/Voice Agent (checks character voice)
-- [ ] **Task 13:** Implement Developmental Editor Agent (evaluates structure)
-- [ ] **Task 14:** Implement Line/Copy Editor Agents (prose and grammar)
-- [ ] **Task 15:** Implement Proofreader Agent (final surface check)
+- [x] **Task 12:** Implement Dialogue/Voice Agent (checks character voice)
+- [x] **Task 13:** Implement Developmental Editor Agent (evaluates structure)
+- [x] **Task 14:** Implement Line/Copy Editor Agents (prose and grammar)
+- [x] **Task 15:** Implement Proofreader Agent (final surface check)
 
 **Checkpoint: Editing**
 - [ ] All editing agents execute in correct order

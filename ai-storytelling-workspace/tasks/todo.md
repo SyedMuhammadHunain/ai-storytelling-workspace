@@ -300,14 +300,14 @@
 
 ## Phase 4: Editing Agents
 
-### Task 12: Implement Dialogue/Voice Agent
+### Task 12: Implement Dialogue/Voice Agent ✅ COMPLETED
 
 **Description:** Mock agent that checks dialogue against character voice signatures.
 
 **Acceptance criteria:**
-- [ ] Reviews chapters for dialogue
-- [ ] Generates mock voice consistency report
-- [ ] Updates Story Bible with voice check results
+- [x] Reviews chapters for dialogue
+- [x] Generates mock voice consistency report
+- [x] Updates Story Bible with voice check results
 
 **Verification:**
 - [ ] Tests pass: `pytest tests/test_agents/test_dialogue_voice.py`
@@ -323,14 +323,14 @@
 
 ---
 
-### Task 13: Implement Developmental Editor Agent
+### Task 13: Implement Developmental Editor Agent ✅ COMPLETED
 
 **Description:** Mock agent that evaluates pacing, stakes, and structural issues.
 
 **Acceptance criteria:**
-- [ ] Analyzes manuscript structure
-- [ ] Generates mock developmental notes (2-3 high-level suggestions)
-- [ ] Updates Story Bible with dev edit report
+- [x] Analyzes manuscript structure
+- [x] Generates mock developmental notes (2-3 high-level suggestions)
+- [x] Updates Story Bible with dev edit report
 
 **Verification:**
 - [ ] Tests pass: `pytest tests/test_agents/test_dev_editor.py`
@@ -346,14 +346,14 @@
 
 ---
 
-### Task 14: Implement Line/Copy Editor Agents
+### Task 14: Implement Line/Copy Editor Agents ✅ COMPLETED
 
 **Description:** Two mock agents - Line Editor (prose rhythm, word choice) and Copy Editor (grammar, punctuation).
 
 **Acceptance criteria:**
-- [ ] Line Editor generates mock prose suggestions
-- [ ] Copy Editor generates mock grammar corrections
-- [ ] Both update Story Bible with their reports
+- [x] Line Editor generates mock prose suggestions
+- [x] Copy Editor generates mock grammar corrections
+- [x] Both update Story Bible with their reports
 
 **Verification:**
 - [ ] Tests pass: `pytest tests/test_agents/test_editors.py`
@@ -370,14 +370,14 @@
 
 ---
 
-### Task 15: Implement Proofreader Agent
+### Task 15: Implement Proofreader Agent ✅ COMPLETED
 
 **Description:** Mock agent for final surface-level check (typos, formatting).
 
 **Acceptance criteria:**
-- [ ] Performs final manuscript scan
-- [ ] Generates mock proofreading report (0-1 issues found)
-- [ ] Updates Story Bible with proofread results
+- [x] Performs final manuscript scan
+- [x] Generates mock proofreading report (0-1 issues found)
+- [x] Updates Story Bible with proofread results
 
 **Verification:**
 - [ ] Tests pass: `pytest tests/test_agents/test_proofreader.py`
