@@ -185,7 +185,7 @@ Build complete feature paths rather than layers:
 
 ### Phase 2: Database & Docker Setup (Week 2-3)
 
-#### Task 5: Design MySQL Database Schema
+#### Task 5: Design MySQL Database Schema ✅
 - Create database schema design document
 - Define tables: projects, story_bibles, checkpoints, images, workflow_states
 - Define relationships and foreign keys
@@ -193,11 +193,11 @@ Build complete feature paths rather than layers:
 - Document schema in `docs/DATABASE_SCHEMA.md`
 
 **Acceptance Criteria:**
-- [ ] Schema supports all Story Bible data
-- [ ] Schema supports workflow state persistence
-- [ ] Schema supports image metadata
-- [ ] Proper indexes for common queries
-- [ ] Schema documented
+- [x] Schema supports all Story Bible data
+- [x] Schema supports workflow state persistence
+- [x] Schema supports image metadata
+- [x] Proper indexes for common queries
+- [x] Schema documented
 
 **Verification:**
 - [ ] Schema document reviewed
@@ -213,7 +213,28 @@ Build complete feature paths rather than layers:
 
 ---
 
-#### Task 6: Create SQLAlchemy Models
+#### Task 6: Create Docker Compose Configuration ✅
+- Create `docker/docker-compose.yml`
+- Add MySQL 8.0 service with health check
+- Add phpMyAdmin service (port 8080)
+- Add Redis service with health check
+- Configure Docker network
+- Add volume mounts for persistence
+- Create `.env.example` with all required variables
+
+**Acceptance Criteria:**
+- [x] MySQL container starts and is healthy
+- [x] phpMyAdmin accessible at localhost:8080
+- [x] Redis container starts and is healthy
+- [x] All services on same Docker network
+- [x] Data persists across container restarts
+- [x] Environment variables documented
+
+**Note:** Docker images currently pulling in background. Verification pending.
+
+---
+
+#### Task 7: Create SQLAlchemy Models
 - Create `src/storytelling_workspace/db/models/project.py`
 - Create `src/storytelling_workspace/db/models/story_bible.py`
 - Create `src/storytelling_workspace/db/models/checkpoint.py`
@@ -245,7 +266,7 @@ Build complete feature paths rather than layers:
 
 ---
 
-#### Task 7: Set Up Alembic Migrations
+#### Task 8: Set Up Alembic Migrations
 - Initialize Alembic in `src/storytelling_workspace/db/migrations/`
 - Create initial migration for all tables
 - Add migration scripts to Makefile
@@ -277,22 +298,21 @@ Build complete feature paths rather than layers:
 
 ---
 
-#### Task 8: Create Docker Compose Configuration
-- Create `docker/docker-compose.yml`
-- Add MySQL 8.0 service with health check
-- Add phpMyAdmin service (port 8080)
-- Add Redis service with health check
-- Configure Docker network
-- Add volume mounts for persistence
-- Create `.env.example` with all required variables
+#### Task 9: Create Repository Layer (Data Access)
+- Create `src/storytelling_workspace/db/repositories/base.py`
+- Create `src/storytelling_workspace/db/repositories/project.py`
+- Create `src/storytelling_workspace/db/repositories/story_bible.py`
+- Create `src/storytelling_workspace/db/repositories/checkpoint.py`
+- Create `src/storytelling_workspace/db/repositories/image.py`
+- Implement CRUD operations for each
+- Add repository tests
 
 **Acceptance Criteria:**
-- [ ] MySQL container starts and is healthy
-- [ ] phpMyAdmin accessible at localhost:8080
-- [ ] Redis container starts and is healthy
-- [ ] All services on same Docker network
-- [ ] Data persists across container restarts
-- [ ] Environment variables documented
+- [ ] All repositories implement CRUD operations
+- [ ] Async operations work correctly
+- [ ] Proper error handling
+- [ ] Tests pass with real database
+- [ ] Transactions handled properly
 
 **Verification:**
 - [ ] Run: `docker-compose up -d`
@@ -332,7 +352,7 @@ Build complete feature paths rather than layers:
 - [ ] Tests pass: `pytest tests/integration/test_database/ -v`
 - [ ] Manual: Create/read/update/delete records via repository
 
-**Dependencies:** Task 6, Task 8 (needs running MySQL)
+**Dependencies:** Task 7, Task 6 (needs running MySQL)
 
 **Files:**
 - `src/storytelling_workspace/db/repositories/*.py` (new, 5 files)

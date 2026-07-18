@@ -1,0 +1,8 @@
+{
+    "typescript.updateImportsOnFileMove.enabled": "always",
+    "chat.viewSessions.orientation": "stacked",
+    "explorer.confirmPasteNative": false,
+    "files.autoSave": "afterDelay",
+    "redhat.telemetry.enabled": false,
+    "git.enableSmartCommit": true
+}

@@ -48,3 +48,17 @@ output/
 # OS
 .DS_Store
 Thumbs.db
+
+# Docker
+.env
+docker-compose.override.yml
+*.log
+
+# Storage
+storage/
+logs/
+
+# Database
+*.sql.gz
+*.sql.bak
+mysql_data/

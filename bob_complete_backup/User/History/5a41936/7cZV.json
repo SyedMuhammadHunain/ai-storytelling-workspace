@@ -1,0 +1,23 @@
+// This configuration file allows you to pass permanent command line arguments to IBM-Bob.
+// Only a subset of arguments is currently supported to reduce the likelihood of breaking
+// the installation.
+//
+// PLEASE DO NOT CHANGE WITHOUT UNDERSTANDING THE IMPACT
+//
+// NOTE: Changing this file requires a restart of IBM-Bob.
+{
+	// Use software rendering instead of hardware accelerated rendering.
+	// This can help in cases where you see rendering issues in IBM-Bob.
+	// "disable-hardware-acceleration": true,
+
+	// Allows to disable crash reporting.
+	// Should restart the app if the value is changed.
+	"enable-crash-reporter": false,
+
+	// Unique id used for correlating crash reports sent from this instance.
+	// Do not edit this value.
+	"crash-reporter-id": "2265ed97-7ceb-44c5-8ac2-773aea2a18e6",
+	"log-level": [
+		"ibm.bob-code=info"
+	]
+}

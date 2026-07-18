@@ -183,10 +183,11 @@ class TestMistralProvider:
                     model="mistral-large-latest"
                 )
         
-        # Verify cost tracker recorded failure
-        mock_cost_tracker.record_call.assert_called_once()
-        call_args = mock_cost_tracker.record_call.call_args
-        assert call_args[1]["success"] is False
+        # Verify cost tracker recorded failure (3 times due to retry decorator)
+        assert mock_cost_tracker.record_call.call_count == 3
+        # Check last call was a failure
+        last_call_args = mock_cost_tracker.record_call.call_args
+        assert last_call_args[1]["success"] is False
     
     @pytest.mark.asyncio
     async def test_generate_text_handles_api_key_error(
@@ -273,34 +274,36 @@ class TestAIProviderFactory:
         mock_cost_tracker
     ):
         """Test that factory uses primary provider first."""
-        factory = AIProviderFactory(
-            primary_provider="mistral",
-            fallback_provider="openai",
-            rate_limiter=mock_rate_limiter,
-            cache=mock_cache,
-            cost_tracker=mock_cost_tracker
-        )
-        
-        # Mock successful primary provider response
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content="Primary response"))]
-        mock_response.usage = Mock(
-            total_tokens=100,
-            prompt_tokens=50,
-            completion_tokens=50
-        )
-        
-        with patch.object(
-            factory.primary.client.chat.completions,
-            'create',
-            new=AsyncMock(return_value=mock_response)
-        ):
-            response = await factory.generate_text(
-                prompt="Test prompt"
+        # Mock environment variables for API keys
+        with patch.dict('os.environ', {'MISTRAL_API_KEY': 'test_mistral_key', 'OPENAI_API_KEY': 'test_openai_key'}):
+            factory = AIProviderFactory(
+                primary_provider="mistral",
+                fallback_provider="openai",
+                rate_limiter=mock_rate_limiter,
+                cache=mock_cache,
+                cost_tracker=mock_cost_tracker
             )
-        
-        assert response.content == "Primary response"
-        assert response.provider == "mistral"
+            
+            # Mock successful primary provider response
+            mock_response = Mock()
+            mock_response.choices = [Mock(message=Mock(content="Primary response"))]
+            mock_response.usage = Mock(
+                total_tokens=100,
+                prompt_tokens=50,
+                completion_tokens=50
+            )
+            
+            with patch.object(
+                factory.primary.client.chat.completions,
+                'create',
+                new=AsyncMock(return_value=mock_response)
+            ):
+                response = await factory.generate_text(
+                    prompt="Test prompt"
+                )
+            
+            assert response.content == "Primary response"
+            assert response.provider == "mistral"
     
     @pytest.mark.asyncio
     async def test_factory_falls_back_on_primary_failure(
@@ -310,40 +313,41 @@ class TestAIProviderFactory:
         mock_cost_tracker
     ):
         """Test that factory falls back to secondary provider on primary failure."""
-        factory = AIProviderFactory(
-            primary_provider="mistral",
-            fallback_provider="openai",
-            rate_limiter=mock_rate_limiter,
-            cache=mock_cache,
-            cost_tracker=mock_cost_tracker
-        )
-        
-        # Mock primary provider failure
-        with patch.object(
-            factory.primary.client.chat.completions,
-            'create',
-            new=AsyncMock(side_effect=Exception("Primary failed"))
-        ):
-            # Mock successful fallback provider response
-            mock_response = Mock()
-            mock_response.choices = [Mock(message=Mock(content="Fallback response"))]
-            mock_response.usage = Mock(
-                total_tokens=100,
-                prompt_tokens=50,
-                completion_tokens=50
+        with patch.dict('os.environ', {'MISTRAL_API_KEY': 'test_mistral_key', 'OPENAI_API_KEY': 'test_openai_key'}):
+            factory = AIProviderFactory(
+                primary_provider="mistral",
+                fallback_provider="openai",
+                rate_limiter=mock_rate_limiter,
+                cache=mock_cache,
+                cost_tracker=mock_cost_tracker
             )
             
+            # Mock primary provider failure
             with patch.object(
-                factory.fallback.client.chat.completions,
+                factory.primary.client.chat.completions,
                 'create',
-                new=AsyncMock(return_value=mock_response)
+                new=AsyncMock(side_effect=Exception("Primary failed"))
             ):
-                response = await factory.generate_text(
-                    prompt="Test prompt"
+                # Mock successful fallback provider response
+                mock_response = Mock()
+                mock_response.choices = [Mock(message=Mock(content="Fallback response"))]
+                mock_response.usage = Mock(
+                    total_tokens=100,
+                    prompt_tokens=50,
+                    completion_tokens=50
                 )
-        
-        assert response.content == "Fallback response"
-        assert response.provider == "openai"
+                
+                with patch.object(
+                    factory.fallback.client.chat.completions,
+                    'create',
+                    new=AsyncMock(return_value=mock_response)
+                ):
+                    response = await factory.generate_text(
+                        prompt="Test prompt"
+                    )
+            
+            assert response.content == "Fallback response"
+            assert response.provider == "openai"
     
     @pytest.mark.asyncio
     async def test_factory_raises_error_when_both_fail(
@@ -353,31 +357,32 @@ class TestAIProviderFactory:
         mock_cost_tracker
     ):
         """Test that factory raises error when both providers fail."""
-        factory = AIProviderFactory(
-            primary_provider="mistral",
-            fallback_provider="openai",
-            rate_limiter=mock_rate_limiter,
-            cache=mock_cache,
-            cost_tracker=mock_cost_tracker
-        )
-        
-        # Mock both providers failing
-        with patch.object(
-            factory.primary.client.chat.completions,
-            'create',
-            new=AsyncMock(side_effect=Exception("Primary failed"))
-        ):
+        with patch.dict('os.environ', {'MISTRAL_API_KEY': 'test_mistral_key', 'OPENAI_API_KEY': 'test_openai_key'}):
+            factory = AIProviderFactory(
+                primary_provider="mistral",
+                fallback_provider="openai",
+                rate_limiter=mock_rate_limiter,
+                cache=mock_cache,
+                cost_tracker=mock_cost_tracker
+            )
+            
+            # Mock both providers failing
             with patch.object(
-                factory.fallback.client.chat.completions,
+                factory.primary.client.chat.completions,
                 'create',
-                new=AsyncMock(side_effect=Exception("Fallback failed"))
+                new=AsyncMock(side_effect=Exception("Primary failed"))
             ):
-                with pytest.raises(ContentGenerationError) as exc_info:
-                    await factory.generate_text(
-                        prompt="Test prompt"
-                    )
-                
-                assert "Both providers failed" in str(exc_info.value)
+                with patch.object(
+                    factory.fallback.client.chat.completions,
+                    'create',
+                    new=AsyncMock(side_effect=Exception("Fallback failed"))
+                ):
+                    with pytest.raises(ContentGenerationError) as exc_info:
+                        await factory.generate_text(
+                            prompt="Test prompt"
+                        )
+                    
+                    assert "Both providers failed" in str(exc_info.value)
 
 
 class TestAIResponse:
