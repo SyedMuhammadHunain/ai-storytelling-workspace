@@ -220,14 +220,14 @@
 
 ## Phase 3: Architecture & Drafting Agents
 
-### Task 9: Implement Plot Architect Agent
+### Task 9: Implement Plot Architect Agent ✅ COMPLETED
 
 **Description:** Mock agent that creates chapter-by-chapter outline with act breaks, POV, goals, and pacing.
 
 **Acceptance criteria:**
-- [ ] Generates mock chapter outline (10 chapters for MVP)
-- [ ] Each chapter has: number, title, POV, goal, conflict, word count target
-- [ ] Updates Story Bible plot section
+- [x] Generates mock chapter outline (10 chapters for MVP)
+- [x] Each chapter has: number, title, POV, goal, conflict, word count target
+- [x] Updates Story Bible plot section
 
 **Verification:**
 - [ ] Tests pass: `pytest tests/test_agents/test_plot_architect.py`
@@ -243,15 +243,15 @@
 
 ---
 
-### Task 10: Implement Chapter Drafting Agent
+### Task 10: Implement Chapter Drafting Agent ✅ COMPLETED
 
 **Description:** Mock agent that generates simple chapter text. Designed to run in parallel batches.
 
 **Acceptance criteria:**
-- [ ] Reads chapter outline from Story Bible
-- [ ] Generates mock chapter text (simple placeholder content)
-- [ ] Updates Story Bible with chapter content and delta report
-- [ ] Can be instantiated multiple times for parallel execution
+- [x] Reads chapter outline from Story Bible
+- [x] Generates mock chapter text (simple placeholder content)
+- [x] Updates Story Bible with chapter content and delta report
+- [x] Can be instantiated multiple times for parallel execution
 
 **Verification:**
 - [ ] Tests pass: `pytest tests/test_agents/test_chapter_drafting.py`
@@ -268,14 +268,14 @@
 
 ---
 
-### Task 11: Implement Continuity Agent
+### Task 11: Implement Continuity Agent ✅ COMPLETED
 
 **Description:** Mock agent that checks for contradictions in timeline, character details, and plot threads.
 
 **Acceptance criteria:**
-- [ ] Reads full manuscript and Story Bible
-- [ ] Generates mock continuity report (flags 0-2 mock issues)
-- [ ] Updates Story Bible with continuity check results
+- [x] Reads full manuscript and Story Bible
+- [x] Generates mock continuity report (flags 0-2 mock issues)
+- [x] Updates Story Bible with continuity check results
 
 **Verification:**
 - [ ] Tests pass: `pytest tests/test_agents/test_continuity.py`

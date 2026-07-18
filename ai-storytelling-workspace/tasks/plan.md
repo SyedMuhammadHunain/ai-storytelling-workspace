@@ -42,9 +42,9 @@ Building a Python CLI orchestrator that demonstrates the 15-agent workflow for A
 
 ### Phase 3: Architecture & Drafting Agents (Tasks 9-11)
 
-- [ ] **Task 9:** Implement Plot Architect Agent (creates chapter outline)
-- [ ] **Task 10:** Implement Chapter Drafting Agent (generates mock chapter text)
-- [ ] **Task 11:** Implement Continuity Agent (checks for contradictions)
+- [x] **Task 9:** Implement Plot Architect Agent (creates chapter outline)
+- [x] **Task 10:** Implement Chapter Drafting Agent (generates mock chapter text)
+- [x] **Task 11:** Implement Continuity Agent (checks for contradictions)
 
 **Checkpoint: Drafting**
 - [ ] Chapter drafting can run in parallel batches
