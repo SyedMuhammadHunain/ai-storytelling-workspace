@@ -118,14 +118,14 @@
 
 ## Phase 2: Setup Agents
 
-### Task 5: Implement Intake Agent
+### Task 5: Implement Intake Agent ✅ COMPLETED
 
 **Description:** Mock agent that captures user input (genre, premise, length, tone) and creates a Book Brief in the Story Bible.
 
 **Acceptance criteria:**
-- [ ] Prompts user for basic book parameters
-- [ ] Creates structured Book Brief in Story Bible
-- [ ] Logs captured information
+- [x] Prompts user for basic book parameters
+- [x] Creates structured Book Brief in Story Bible
+- [x] Logs captured information
 
 **Verification:**
 - [ ] Tests pass: `pytest tests/test_agents/test_intake.py`
@@ -142,14 +142,14 @@
 
 ---
 
-### Task 6: Implement Concept Agent
+### Task 6: Implement Concept Agent ✅ COMPLETED
 
 **Description:** Mock agent that expands the brief into logline, premise, central conflict, and theme.
 
 **Acceptance criteria:**
-- [ ] Reads Book Brief from Story Bible
-- [ ] Generates mock concept elements (logline, premise, conflict, theme)
-- [ ] Updates Story Bible with concept section
+- [x] Reads Book Brief from Story Bible
+- [x] Generates mock concept elements (logline, premise, conflict, theme)
+- [x] Updates Story Bible with concept section
 
 **Verification:**
 - [ ] Tests pass: `pytest tests/test_agents/test_concept.py`
@@ -165,14 +165,14 @@
 
 ---
 
-### Task 7: Implement Worldbuilding Agent
+### Task 7: Implement Worldbuilding Agent ✅ COMPLETED
 
 **Description:** Mock agent that creates world rules, timeline, factions, and geography.
 
 **Acceptance criteria:**
-- [ ] Generates mock world elements (rules, timeline, locations)
-- [ ] Updates Story Bible world section
-- [ ] Logs world elements created
+- [x] Generates mock world elements (rules, timeline, locations)
+- [x] Updates Story Bible world section
+- [x] Logs world elements created
 
 **Verification:**
 - [ ] Tests pass: `pytest tests/test_agents/test_worldbuilding.py`
@@ -188,14 +188,14 @@
 
 ---
 
-### Task 8: Implement Character Agent
+### Task 8: Implement Character Agent ✅ COMPLETED
 
 **Description:** Mock agent that creates character profiles with goals, flaws, arcs, and voice signatures.
 
 **Acceptance criteria:**
-- [ ] Generates mock character profiles (protagonist, antagonist, supporting)
-- [ ] Each character has goals, flaws, arc, voice signature
-- [ ] Updates Story Bible characters section
+- [x] Generates mock character profiles (protagonist, antagonist, supporting)
+- [x] Each character has goals, flaws, arc, voice signature
+- [x] Updates Story Bible characters section
 
 **Verification:**
 - [ ] Tests pass: `pytest tests/test_agents/test_character.py`

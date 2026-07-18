@@ -30,10 +30,10 @@ Building a Python CLI orchestrator that demonstrates the 15-agent workflow for A
 
 ### Phase 2: Setup Agents (Tasks 5-8)
 
-- [ ] **Task 5:** Implement Intake Agent (captures user input, creates Book Brief)
-- [ ] **Task 6:** Implement Concept Agent (expands brief into premise)
-- [ ] **Task 7:** Implement Worldbuilding Agent (creates world rules, timeline)
-- [ ] **Task 8:** Implement Character Agent (creates character profiles)
+- [x] **Task 5:** Implement Intake Agent (captures user input, creates Book Brief)
+- [x] **Task 6:** Implement Concept Agent (expands brief into premise)
+- [x] **Task 7:** Implement Worldbuilding Agent (creates world rules, timeline)
+- [x] **Task 8:** Implement Character Agent (creates character profiles)
 
 **Checkpoint: Setup Agents**
 - [ ] All setup agents execute and update Story Bible correctly
