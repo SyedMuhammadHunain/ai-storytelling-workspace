@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Union
 from datetime import datetime
 
 from .models import (
@@ -42,6 +42,9 @@ class StoryBible:
         self.deltas: List[AgentDelta] = []  # History of agent changes
         self.metadata: Dict[str, Any] = {}  # Additional metadata
         
+        # Cache for performance
+        self._chapters_cache: Optional[List[Chapter]] = None
+        
     def add_character(self, character: Character) -> None:
         """Add or update a character."""
         self.characters[character.name] = character
@@ -65,6 +68,7 @@ class StoryBible:
     def add_chapter(self, chapter: Chapter) -> None:
         """Add or update a chapter."""
         self.chapters[chapter.number] = chapter
+        self._chapters_cache = None  # Invalidate cache
         self._bump_version()
         
     def record_delta(self, agent_name: str, changes: Dict[str, Any], summary: str) -> None:
@@ -88,7 +92,9 @@ class StoryBible:
         
     def get_chapters_in_order(self) -> List[Chapter]:
         """Get all chapters sorted by number."""
-        return [self.chapters[num] for num in sorted(self.chapters.keys())]
+        if self._chapters_cache is None:
+            self._chapters_cache = [self.chapters[num] for num in sorted(self.chapters.keys())]
+        return self._chapters_cache
         
     def _bump_version(self) -> None:
         """Increment version and update timestamp."""
@@ -179,8 +185,9 @@ class StoryBible:
             
         return bible
         
-    def save(self, filepath: Path) -> None:
+    def save(self, filepath: Union[str, Path]) -> None:
         """Save Story Bible to JSON file."""
+        filepath = Path(filepath) if isinstance(filepath, str) else filepath
         filepath.parent.mkdir(parents=True, exist_ok=True)
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(self.to_dict(), f, indent=2, ensure_ascii=False)
