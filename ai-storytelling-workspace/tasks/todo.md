@@ -1,690 +1,225 @@
-# Task List: AI Storytelling Workspace MVP
+# AI Storytelling Workspace v2.0 - Task List
 
-## Phase 1: Foundation
+## Phase 1: Foundation & AI Integration (Week 1-2)
 
-### Task 1: Set up project structure and dependencies ✅ COMPLETED
+- [ ] Task 1: Set up AI Provider Abstraction Layer
+  - Acceptance: Mistral + OpenAI providers working, caching, rate limiting, cost tracking
+  - Verify: `pytest tests/unit/test_core/test_ai_provider.py -v`
+  - Files: `core/ai_provider.py`, `core/retry.py`, `core/rate_limiter.py`, `core/cache.py`, `core/cost_tracker.py`
 
-**Description:** Create the Python project structure with proper directory layout, virtual environment, and dependencies (no external AI libraries needed for MVP).
+- [ ] Task 2: Implement Image Provider with Pixtral
+  - Acceptance: Pixtral image generation working, compression, storage, metadata tracking
+  - Verify: `pytest tests/unit/test_core/test_image_provider.py -v`
+  - Files: `core/image_provider.py`, `utils/image_prompts.py`
 
-**Acceptance criteria:**
-- [x] Project has standard Python structure (src/, tests/, docs/)
-- [x] requirements.txt includes necessary dependencies (pytest, typing extensions)
-- [x] Virtual environment can be created and activated
-- [x] Project can be installed in development mode
+- [ ] Task 3: Update All 15 Agents with Real AI
+  - Acceptance: All agents use real AI, prompts effective, tests pass with mocks
+  - Verify: `pytest tests/unit/test_agents/ -v`
+  - Files: `agents/base.py`, all 15 agent files, `utils/prompts.py`
 
-**Verification:**
-- [ ] `python -m venv venv && source venv/bin/activate` works
-- [ ] `pip install -r requirements.txt` completes without errors
-- [ ] `pip install -e .` installs the package
+- [ ] Task 4: Create Image Generator Agent
+  - Acceptance: Cover art, portraits, scene illustrations generated
+  - Verify: `pytest tests/unit/test_agents/test_image_generator.py -v`
+  - Files: `agents/image_generator.py`, `orchestrator.py`
 
-**Dependencies:** None
-
-**Files likely touched:**
-- `setup.py` or `pyproject.toml`
-- `requirements.txt`
-- `src/storytelling_workspace/__init__.py`
-- `tests/__init__.py`
-- `.gitignore`
-- `README.md` (initial)
-
-**Estimated scope:** Small (5-6 files, mostly boilerplate)
-
----
-
-### Task 2: Implement Story Bible data structures and persistence ✅ COMPLETED
-
-**Description:** Create the Story Bible data model with JSON serialization. Includes character profiles, world rules, timeline, plot threads, and metadata tracking.
-
-**Acceptance criteria:**
-- [x] StoryBible class with all required sections (characters, world, timeline, plot, metadata)
-- [x] Can serialize to/from JSON
-- [x] Can track deltas (what changed in each agent update)
-- [x] Supports versioning (simple counter, not full git-like history)
-
-**Verification:**
-- [ ] Tests pass: `pytest tests/test_story_bible.py`
-- [ ] Can create, save, load, and update a Story Bible
-- [ ] JSON output is human-readable
-
-**Dependencies:** Task 1
-
-**Files likely touched:**
-- `src/storytelling_workspace/story_bible.py`
-- `src/storytelling_workspace/models.py` (data classes)
-- `tests/test_story_bible.py`
-
-**Estimated scope:** Medium (3 files, ~300-400 lines total)
+### Checkpoint: AI Integration Complete
+- [ ] All tests pass with 95%+ coverage
+- [ ] Mistral text + Pixtral images working
+- [ ] Cost tracking operational
+- [ ] Manual: Run full workflow, verify AI content
 
 ---
 
-### Task 3: Implement base Agent class and mock agent framework ✅ COMPLETED
+## Phase 2: Database & Docker Setup (Week 2-3)
 
-**Description:** Create abstract base Agent class with execute() method, logging, and Story Bible interaction. Include a MockAgent base class for simple mock implementations.
+- [ ] Task 5: Design MySQL Database Schema
+  - Acceptance: Schema documented, supports all data, proper indexes
+  - Verify: Review `docs/DATABASE_SCHEMA.md`
+  - Files: `docs/DATABASE_SCHEMA.md`
 
-**Acceptance criteria:**
-- [x] BaseAgent abstract class with execute() method signature
-- [x] Agent can read from and write to Story Bible
-- [x] Agent logs execution start/end and key actions
-- [x] MockAgent class provides simple mock output generation
+- [ ] Task 6: Create SQLAlchemy Models
+  - Acceptance: All models defined, relationships correct, async sessions work
+  - Verify: `pytest tests/unit/test_db/test_models/ -v`
+  - Files: `db/base.py`, `db/session.py`, `db/models/*.py` (5 files)
 
-**Verification:**
-- [ ] Tests pass: `pytest tests/test_agents.py`
-- [ ] Can instantiate and execute a mock agent
-- [ ] Agent execution updates Story Bible correctly
+- [ ] Task 7: Set Up Alembic Migrations
+  - Acceptance: Initial migration creates tables, up/down works
+  - Verify: `make db-migrate && make db-rollback`
+  - Files: `db/migrations/env.py`, `db/migrations/versions/001_initial.py`
 
-**Dependencies:** Task 2
+- [ ] Task 8: Create Docker Compose Configuration
+  - Acceptance: MySQL + phpMyAdmin + Redis running, accessible
+  - Verify: `docker-compose up -d && docker-compose ps`
+  - Files: `docker/docker-compose.yml`, `.env.example`
 
-**Files likely touched:**
-- `src/storytelling_workspace/agents/base.py`
-- `src/storytelling_workspace/agents/__init__.py`
-- `tests/test_agents.py`
+- [ ] Task 9: Create Repository Layer (Data Access)
+  - Acceptance: CRUD operations work, async, proper error handling
+  - Verify: `pytest tests/integration/test_database/ -v`
+  - Files: `db/repositories/*.py` (5 files)
 
-**Estimated scope:** Small (3 files, ~200 lines)
-
----
-
-### Task 4: Implement human checkpoint system ✅ COMPLETED
-
-**Description:** Create checkpoint mechanism that pauses execution, displays current state, prompts user for approval, and resumes or aborts based on input.
-
-**Acceptance criteria:**
-- [x] Checkpoint class can pause execution
-- [x] Displays checkpoint name and current Story Bible summary
-- [x] Prompts user with clear options (approve/edit/abort)
-- [x] Returns user decision to orchestrator
-
-**Verification:**
-- [ ] Tests pass: `pytest tests/test_checkpoint.py`
-- [ ] Manual test: checkpoint pauses and waits for input
-- [ ] User can approve, and execution continues
-
-**Dependencies:** Task 2
-
-**Files likely touched:**
-- `src/storytelling_workspace/checkpoint.py`
-- `tests/test_checkpoint.py`
-
-**Estimated scope:** Small (2 files, ~150 lines)
+### Checkpoint: Database Layer Complete
+- [ ] MySQL + phpMyAdmin accessible at localhost:8080
+- [ ] Migrations work
+- [ ] Repositories perform CRUD
+- [ ] Data persists across restarts
 
 ---
 
-## Checkpoint: Foundation
-- [ ] All unit tests pass (`pytest`)
-- [ ] Story Bible can be created, updated, and persisted
-- [ ] Base agent executes and logs correctly
-- [ ] Human checkpoint pauses and resumes
+## Phase 3: API & Workers (Week 3-4)
+
+- [ ] Task 10: Create FastAPI Application Structure
+  - Acceptance: FastAPI starts, health check works, CORS configured, docs at /docs
+  - Verify: `uvicorn storytelling_workspace.api.main:app --reload`
+  - Files: `api/main.py`, `api/dependencies.py`, `api/middleware.py`, `config.py`
+
+- [ ] Task 11: Create Pydantic Schemas
+  - Acceptance: All schemas defined, validation works, OpenAPI correct
+  - Verify: `pytest tests/unit/test_api/test_schemas/ -v`
+  - Files: `api/schemas/*.py` (5 files)
+
+- [ ] Task 12: Implement Project Management Endpoints
+  - Acceptance: CRUD endpoints work, proper status codes, validation
+  - Verify: `pytest tests/integration/test_api/test_projects.py -v`
+  - Files: `api/routes/projects.py`, `services/project_service.py`
+
+- [ ] Task 13: Implement Workflow Execution Endpoints
+  - Acceptance: Start/pause/resume/status endpoints work, state persisted
+  - Verify: `pytest tests/integration/test_api/test_workflow.py -v`
+  - Files: `api/routes/workflow.py`, `services/workflow_service.py`
+
+- [ ] Task 14: Set Up Celery Workers
+  - Acceptance: Worker starts, tasks execute, results stored, failures handled
+  - Verify: `celery -A storytelling_workspace.workers worker --loglevel=info`
+  - Files: `workers/celery_app.py`, `workers/agent_tasks.py`, `workers/workflow_tasks.py`, `workers/image_tasks.py`
+
+- [ ] Task 15: Implement WebSocket for Real-time Updates
+  - Acceptance: WebSocket connections work, progress broadcasts, multiple clients
+  - Verify: `pytest tests/integration/test_api/test_websocket.py -v`
+  - Files: `api/websocket/manager.py`, `api/websocket/handlers.py`
+
+### Checkpoint: API & Workers Complete
+- [ ] FastAPI + Celery + WebSocket working
+- [ ] Can start/pause/resume workflows via API
+- [ ] Real-time progress updates functional
 
 ---
 
-## Phase 2: Setup Agents
+## Phase 4: Web UI (Week 4-5)
 
-### Task 5: Implement Intake Agent ✅ COMPLETED
+- [ ] Task 16: Set Up Next.js Project
+  - Acceptance: Next.js starts, TypeScript + Tailwind + shadcn/ui configured
+  - Verify: `cd web && npm run dev`
+  - Files: `web/package.json`, `web/app/layout.tsx`, `web/lib/api-client.ts`
 
-**Description:** Mock agent that captures user input (genre, premise, length, tone) and creates a Book Brief in the Story Bible.
+- [ ] Task 17: Build Project Management UI
+  - Acceptance: List/create/view/edit/delete projects, loading states, errors
+  - Verify: Manual testing + `npm run test`
+  - Files: `web/app/projects/*.tsx`, `web/components/projects/*.tsx`
 
-**Acceptance criteria:**
-- [x] Prompts user for basic book parameters
-- [x] Creates structured Book Brief in Story Bible
-- [x] Logs captured information
+- [ ] Task 18: Build Workflow Execution UI
+  - Acceptance: Start/pause/resume, real-time updates, agent status, progress
+  - Verify: Manual testing + `npm run test`
+  - Files: `web/app/projects/[id]/workflow/page.tsx`, `web/components/workflow/*.tsx`
 
-**Verification:**
-- [ ] Tests pass: `pytest tests/test_agents/test_intake.py`
-- [ ] Manual run: agent prompts for input and updates Story Bible
-- [ ] Book Brief section appears in Story Bible JSON
+- [ ] Task 19: Build Checkpoint Editing UI
+  - Acceptance: Checkpoint dialog, Story Bible viewer, content editing, approve/reject
+  - Verify: Manual testing + `npm run test`
+  - Files: `web/components/checkpoint/*.tsx`, `web/hooks/use-checkpoint.ts`
 
-**Dependencies:** Task 3
+- [ ] Task 20: Build Image Gallery UI
+  - Acceptance: Cover/portraits/scenes displayed, lightbox, download
+  - Verify: Manual testing + `npm run test`
+  - Files: `web/app/projects/[id]/images/page.tsx`, `web/components/images/*.tsx`
 
-**Files likely touched:**
-- `src/storytelling_workspace/agents/intake.py`
-- `tests/test_agents/test_intake.py`
+- [ ] Task 21: Build Story Bible Visualization UI
+  - Acceptance: Characters, plot graph, timeline, interactive, filter/search
+  - Verify: Manual testing + `npm run test`
+  - Files: `web/app/projects/[id]/story-bible/page.tsx`, `web/components/story-bible/*.tsx`
 
-**Estimated scope:** Small (2 files, ~100 lines)
-
----
-
-### Task 6: Implement Concept Agent ✅ COMPLETED
-
-**Description:** Mock agent that expands the brief into logline, premise, central conflict, and theme.
-
-**Acceptance criteria:**
-- [x] Reads Book Brief from Story Bible
-- [x] Generates mock concept elements (logline, premise, conflict, theme)
-- [x] Updates Story Bible with concept section
-
-**Verification:**
-- [ ] Tests pass: `pytest tests/test_agents/test_concept.py`
-- [ ] Concept section appears in Story Bible with all elements
-
-**Dependencies:** Task 5
-
-**Files likely touched:**
-- `src/storytelling_workspace/agents/concept.py`
-- `tests/test_agents/test_concept.py`
-
-**Estimated scope:** Small (2 files, ~100 lines)
+### Checkpoint: Web UI Complete
+- [ ] All pages accessible and functional
+- [ ] Real-time updates working
+- [ ] Image gallery + Story Bible visualization work
 
 ---
 
-### Task 7: Implement Worldbuilding Agent ✅ COMPLETED
-
-**Description:** Mock agent that creates world rules, timeline, factions, and geography.
-
-**Acceptance criteria:**
-- [x] Generates mock world elements (rules, timeline, locations)
-- [x] Updates Story Bible world section
-- [x] Logs world elements created
-
-**Verification:**
-- [ ] Tests pass: `pytest tests/test_agents/test_worldbuilding.py`
-- [ ] World section appears in Story Bible
-
-**Dependencies:** Task 6
-
-**Files likely touched:**
-- `src/storytelling_workspace/agents/worldbuilding.py`
-- `tests/test_agents/test_worldbuilding.py`
-
-**Estimated scope:** Small (2 files, ~120 lines)
-
----
-
-### Task 8: Implement Character Agent ✅ COMPLETED
-
-**Description:** Mock agent that creates character profiles with goals, flaws, arcs, and voice signatures.
-
-**Acceptance criteria:**
-- [x] Generates mock character profiles (protagonist, antagonist, supporting)
-- [x] Each character has goals, flaws, arc, voice signature
-- [x] Updates Story Bible characters section
-
-**Verification:**
-- [ ] Tests pass: `pytest tests/test_agents/test_character.py`
-- [ ] Characters section appears in Story Bible with all profiles
-
-**Dependencies:** Task 6
-
-**Files likely touched:**
-- `src/storytelling_workspace/agents/character.py`
-- `tests/test_agents/test_character.py`
-
-**Estimated scope:** Small (2 files, ~150 lines)
-
----
-
-## Checkpoint: Setup Agents
-- [ ] All setup agents execute successfully
-- [ ] Story Bible contains brief, concept, world, and characters
-- [ ] Human checkpoints 1-3 work correctly
-
----
-
-## Phase 3: Architecture & Drafting Agents
-
-### Task 9: Implement Plot Architect Agent ✅ COMPLETED
-
-**Description:** Mock agent that creates chapter-by-chapter outline with act breaks, POV, goals, and pacing.
-
-**Acceptance criteria:**
-- [x] Generates mock chapter outline (10 chapters for MVP)
-- [x] Each chapter has: number, title, POV, goal, conflict, word count target
-- [x] Updates Story Bible plot section
-
-**Verification:**
-- [ ] Tests pass: `pytest tests/test_agents/test_plot_architect.py`
-- [ ] Plot section with chapter outline appears in Story Bible
-
-**Dependencies:** Task 8
-
-**Files likely touched:**
-- `src/storytelling_workspace/agents/plot_architect.py`
-- `tests/test_agents/test_plot_architect.py`
-
-**Estimated scope:** Medium (2 files, ~200 lines)
-
----
-
-### Task 10: Implement Chapter Drafting Agent ✅ COMPLETED
-
-**Description:** Mock agent that generates simple chapter text. Designed to run in parallel batches.
-
-**Acceptance criteria:**
-- [x] Reads chapter outline from Story Bible
-- [x] Generates mock chapter text (simple placeholder content)
-- [x] Updates Story Bible with chapter content and delta report
-- [x] Can be instantiated multiple times for parallel execution
-
-**Verification:**
-- [ ] Tests pass: `pytest tests/test_agents/test_chapter_drafting.py`
-- [ ] Chapter content appears in Story Bible
-- [ ] Multiple instances can run without conflicts
-
-**Dependencies:** Task 9
-
-**Files likely touched:**
-- `src/storytelling_workspace/agents/chapter_drafting.py`
-- `tests/test_agents/test_chapter_drafting.py`
-
-**Estimated scope:** Medium (2 files, ~180 lines)
-
----
-
-### Task 11: Implement Continuity Agent ✅ COMPLETED
-
-**Description:** Mock agent that checks for contradictions in timeline, character details, and plot threads.
-
-**Acceptance criteria:**
-- [x] Reads full manuscript and Story Bible
-- [x] Generates mock continuity report (flags 0-2 mock issues)
-- [x] Updates Story Bible with continuity check results
-
-**Verification:**
-- [ ] Tests pass: `pytest tests/test_agents/test_continuity.py`
-- [ ] Continuity report appears in Story Bible
-
-**Dependencies:** Task 10
-
-**Files likely touched:**
-- `src/storytelling_workspace/agents/continuity.py`
-- `tests/test_agents/test_continuity.py`
-
-**Estimated scope:** Small (2 files, ~120 lines)
-
----
-
-## Checkpoint: Drafting
-- [ ] Chapter drafting executes (sequential batching for MVP)
-- [ ] Story Bible accumulates chapter content
-- [ ] Continuity agent runs and logs results
-
----
-
-## Phase 4: Editing Agents
-
-### Task 12: Implement Dialogue/Voice Agent ✅ COMPLETED
-
-**Description:** Mock agent that checks dialogue against character voice signatures.
-
-**Acceptance criteria:**
-- [x] Reviews chapters for dialogue
-- [x] Generates mock voice consistency report
-- [x] Updates Story Bible with voice check results
-
-**Verification:**
-- [ ] Tests pass: `pytest tests/test_agents/test_dialogue_voice.py`
-- [ ] Voice check report appears in Story Bible
-
-**Dependencies:** Task 11
-
-**Files likely touched:**
-- `src/storytelling_workspace/agents/dialogue_voice.py`
-- `tests/test_agents/test_dialogue_voice.py`
-
-**Estimated scope:** Small (2 files, ~100 lines)
-
----
-
-### Task 13: Implement Developmental Editor Agent ✅ COMPLETED
-
-**Description:** Mock agent that evaluates pacing, stakes, and structural issues.
-
-**Acceptance criteria:**
-- [x] Analyzes manuscript structure
-- [x] Generates mock developmental notes (2-3 high-level suggestions)
-- [x] Updates Story Bible with dev edit report
-
-**Verification:**
-- [ ] Tests pass: `pytest tests/test_agents/test_dev_editor.py`
-- [ ] Dev edit report appears in Story Bible
-
-**Dependencies:** Task 12
-
-**Files likely touched:**
-- `src/storytelling_workspace/agents/dev_editor.py`
-- `tests/test_agents/test_dev_editor.py`
-
-**Estimated scope:** Small (2 files, ~120 lines)
-
----
-
-### Task 14: Implement Line/Copy Editor Agents ✅ COMPLETED
-
-**Description:** Two mock agents - Line Editor (prose rhythm, word choice) and Copy Editor (grammar, punctuation).
-
-**Acceptance criteria:**
-- [x] Line Editor generates mock prose suggestions
-- [x] Copy Editor generates mock grammar corrections
-- [x] Both update Story Bible with their reports
-
-**Verification:**
-- [ ] Tests pass: `pytest tests/test_agents/test_editors.py`
-- [ ] Both editor reports appear in Story Bible
-
-**Dependencies:** Task 13
-
-**Files likely touched:**
-- `src/storytelling_workspace/agents/line_editor.py`
-- `src/storytelling_workspace/agents/copy_editor.py`
-- `tests/test_agents/test_editors.py`
-
-**Estimated scope:** Small (3 files, ~150 lines total)
-
----
-
-### Task 15: Implement Proofreader Agent ✅ COMPLETED
-
-**Description:** Mock agent for final surface-level check (typos, formatting).
-
-**Acceptance criteria:**
-- [x] Performs final manuscript scan
-- [x] Generates mock proofreading report (0-1 issues found)
-- [x] Updates Story Bible with proofread results
-
-**Verification:**
-- [ ] Tests pass: `pytest tests/test_agents/test_proofreader.py`
-- [ ] Proofread report appears in Story Bible
-
-**Dependencies:** Task 14
-
-**Files likely touched:**
-- `src/storytelling_workspace/agents/proofreader.py`
-- `tests/test_agents/test_proofreader.py`
-
-**Estimated scope:** Small (2 files, ~80 lines)
-
----
-
-## Checkpoint: Editing
-- [ ] All editing agents execute in sequence
-- [ ] Story Bible contains all editing reports
-
----
-
-## Phase 5: Assembly & Finalization
-
-### Task 16: Implement Front/Back Matter Agents ✅ COMPLETED
-
-**Description:** Mock agents for title page, copyright, TOC, acknowledgments, author bio.
-
-**Acceptance criteria:**
-- [x] Front Matter Agent generates title page, copyright, TOC
-- [x] Back Matter Agent generates acknowledgments, author bio
-- [x] Both update Story Bible with their content
-
-**Verification:**
-- [ ] Tests pass: `pytest tests/test_agents/test_matter.py`
-- [ ] Front and back matter sections appear in Story Bible
-
-**Dependencies:** Task 15
-
-**Files likely touched:**
-- `src/storytelling_workspace/agents/front_matter.py`
-- `src/storytelling_workspace/agents/back_matter.py`
-- `tests/test_agents/test_matter.py`
-
-**Estimated scope:** Small (3 files, ~150 lines total)
-
----
-
-### Task 17: Implement Compilation Agent ✅ COMPLETED
-
-**Description:** Mock agent that assembles all chapters and matter into a single manuscript.
-
-**Acceptance criteria:**
-- [x] Collects all chapters in order
-- [x] Adds front and back matter
-- [x] Generates final manuscript text
-- [x] Updates Story Bible with compilation metadata
-
-**Verification:**
-- [ ] Tests pass: `pytest tests/test_agents/test_compilation.py`
-- [ ] Compiled manuscript appears in Story Bible
-
-**Dependencies:** Task 16
-
-**Files likely touched:**
-- `src/storytelling_workspace/agents/compilation.py`
-- `tests/test_agents/test_compilation.py`
-
-**Estimated scope:** Small (2 files, ~120 lines)
-
----
-
-### Task 18: Implement QA Agent ✅ COMPLETED
-
-**Description:** Mock agent that validates manuscript completeness (no missing chapters, no TODOs).
-
-**Acceptance criteria:**
-- [x] Checks for missing chapters
-- [x] Checks for placeholder markers
-- [x] Validates Story Bible completeness
-- [x] Generates QA report
-
-**Verification:**
-- [ ] Tests pass: `pytest tests/test_agents/test_qa.py`
-- [ ] QA report appears in Story Bible
-
-**Dependencies:** Task 17
-
-**Files likely touched:**
-- `src/storytelling_workspace/agents/qa.py`
-- `tests/test_agents/test_qa.py`
-
-**Estimated scope:** Small (2 files, ~100 lines)
-
----
-
-### Task 19: Implement Export Agent ✅ COMPLETED
-
-**Description:** Mock agent that outputs manuscript to files (TXT, JSON).
-
-**Acceptance criteria:**
-- [x] Exports manuscript to text file
-- [x] Exports Story Bible to JSON file
-- [x] Creates output directory if needed
-- [x] Logs export paths
-
-**Verification:**
-- [ ] Tests pass: `pytest tests/test_agents/test_export.py`
-- [ ] Output files are created and readable
-
-**Dependencies:** Task 18
-
-**Files likely touched:**
-- `src/storytelling_workspace/agents/export.py`
-- `tests/test_agents/test_export.py`
-
-**Estimated scope:** Small (2 files, ~100 lines)
-
----
-
-## Checkpoint: Assembly
-- [ ] Full manuscript can be compiled
-- [ ] Export produces readable output files
-
----
-
-## Phase 6: Orchestration & CLI
-
-### Task 20: Implement Master Orchestrator
-
-**Description:** Coordinates all 15 agents, manages execution order, handles parallel batching, integrates checkpoints.
-
-**Acceptance criteria:**
-- [ ] Executes agents in correct dependency order
-- [ ] Handles sequential vs parallel execution
-- [ ] Integrates human checkpoints at 6 defined points
-- [ ] Manages Story Bible state throughout
-- [ ] Provides clear progress logging
-
-**Verification:**
-- [ ] Tests pass: `pytest tests/test_orchestrator.py`
-- [ ] Can execute full workflow programmatically
-- [ ] Checkpoints pause at correct points
-
-**Dependencies:** Tasks 5-19
-
-**Files likely touched:**
-- `src/storytelling_workspace/orchestrator.py`
-- `tests/test_orchestrator.py`
-
-**Estimated scope:** Medium (2 files, ~300 lines)
-
----
-
-### Task 21: Implement CLI entry point
-
-**Description:** Command-line interface with argument parsing, help text, and workflow execution.
-
-**Acceptance criteria:**
-- [ ] CLI accepts project name and output directory
-- [ ] Provides help text and usage examples
-- [ ] Executes orchestrator with user inputs
-- [ ] Handles errors gracefully
-
-**Verification:**
-- [ ] `python -m storytelling_workspace --help` shows usage
-- [ ] `python -m storytelling_workspace --project "Test Book"` runs workflow
-- [ ] Invalid arguments show clear error messages
-
-**Dependencies:** Task 20
-
-**Files likely touched:**
-- `src/storytelling_workspace/__main__.py`
-- `src/storytelling_workspace/cli.py`
-- `tests/test_cli.py`
-
-**Estimated scope:** Small (3 files, ~150 lines)
-
----
-
-### Task 22: Add comprehensive logging and progress indicators
-
-**Description:** Enhance logging with progress bars, agent status, and Story Bible update summaries.
-
-**Acceptance criteria:**
-- [ ] Each agent logs start/end with timestamps
-- [ ] Progress indicator shows current phase and agent
-- [ ] Story Bible updates are summarized in logs
-- [ ] Checkpoint prompts are clearly formatted
-
-**Verification:**
-- [ ] Full workflow run shows clear progress
-- [ ] Logs are readable and informative
-- [ ] Can trace execution flow from logs
-
-**Dependencies:** Task 21
-
-**Files likely touched:**
-- `src/storytelling_workspace/logging_config.py`
-- `src/storytelling_workspace/orchestrator.py` (updates)
-- `src/storytelling_workspace/agents/base.py` (updates)
-
-**Estimated scope:** Small (3 files, ~100 lines of changes)
-
----
-
-## Checkpoint: Integration
-- [ ] Full workflow runs end-to-end from CLI
-- [ ] All 15 agents execute in correct order
-- [ ] Human checkpoints pause at 6 points
-- [ ] Story Bible evolves correctly
-- [ ] Logs are clear and informative
-
----
-
-## Phase 7: Testing & Documentation
-
-### Task 23: Write integration tests
-
-**Description:** End-to-end tests that run the full workflow and validate outputs.
-
-**Acceptance criteria:**
-- [ ] Integration test runs full workflow
-- [ ] Validates Story Bible structure and content
-- [ ] Validates output files exist and are readable
-- [ ] Tests checkpoint handling (with mocked user input)
-
-**Verification:**
-- [ ] `pytest tests/integration/` passes
-- [ ] Integration test completes in reasonable time (<30s)
-
-**Dependencies:** Task 22
-
-**Files likely touched:**
-- `tests/integration/test_full_workflow.py`
-- `tests/integration/conftest.py`
-
-**Estimated scope:** Small (2 files, ~200 lines)
-
----
-
-### Task 24: Create comprehensive README
-
-**Description:** User-facing documentation with installation, usage, and examples.
-
-**Acceptance criteria:**
-- [ ] Installation instructions (venv, dependencies)
-- [ ] Usage examples with CLI commands
-- [ ] Explanation of workflow phases
-- [ ] Description of Story Bible structure
-- [ ] Troubleshooting section
-
-**Verification:**
-- [ ] README is clear and complete
-- [ ] Following README instructions works for new user
-
-**Dependencies:** Task 23
-
-**Files likely touched:**
-- `README.md`
-
-**Estimated scope:** Small (1 file, ~300 lines)
-
----
-
-### Task 25: Add example outputs
-
-**Description:** Include sample Story Bible and manuscript output for reference.
-
-**Acceptance criteria:**
-- [ ] Example Story Bible JSON in docs/examples/
-- [ ] Example manuscript output in docs/examples/
-- [ ] Example CLI session log
-- [ ] README links to examples
-
-**Verification:**
-- [ ] Examples are realistic and helpful
-- [ ] Examples match actual output format
-
-**Dependencies:** Task 24
-
-**Files likely touched:**
-- `docs/examples/story_bible_example.json`
-- `docs/examples/manuscript_example.txt`
-- `docs/examples/cli_session.log`
-- `README.md` (updates)
-
-**Estimated scope:** Small (4 files, mostly content)
-
----
-
-## Checkpoint: Complete
-- [ ] All tests pass (`pytest`)
-- [ ] README is complete and accurate
-- [ ] Example outputs are included
-- [ ] Project is ready for demonstration
+## Phase 5: Docker Deployment & Polish (Week 5-6)
+
+- [ ] Task 22: Create API Dockerfile
+  - Acceptance: Dockerfile builds, API starts in container, health check passes
+  - Verify: `docker build -f docker/Dockerfile.api -t storytelling-api .`
+  - Files: `docker/Dockerfile.api`, `docker/entrypoint-api.sh`
+
+- [ ] Task 23: Create Worker Dockerfile
+  - Acceptance: Dockerfile builds, worker starts, processes tasks
+  - Verify: `docker build -f docker/Dockerfile.worker -t storytelling-worker .`
+  - Files: `docker/Dockerfile.worker`, `docker/entrypoint-worker.sh`
+
+- [ ] Task 24: Create Web Dockerfile
+  - Acceptance: Dockerfile builds, web app starts, production build works
+  - Verify: `docker build -f docker/Dockerfile.web -t storytelling-web ./web`
+  - Files: `docker/Dockerfile.web`, `docker/entrypoint-web.sh`
+
+- [ ] Task 25: Create Nginx Configuration
+  - Acceptance: Routes to API/Web/phpMyAdmin correctly, rate limiting works
+  - Verify: `nginx -t -c docker/nginx/nginx.conf`
+  - Files: `docker/nginx/nginx.conf`, `docker/Dockerfile.nginx`
+
+- [ ] Task 26: Complete Docker Compose Configuration
+  - Acceptance: All 7 services start, health checks pass, accessible
+  - Verify: `docker-compose up -d && docker-compose ps`
+  - Files: `docker/docker-compose.yml`, `docker/docker-compose.prod.yml`
+
+- [ ] Task 27: Create Makefile Commands
+  - Acceptance: All commands work (setup, dev, test, docker, db)
+  - Verify: `make setup && make dev && make test`
+  - Files: `Makefile`, `scripts/setup.sh`
+
+- [ ] Task 28: Write Comprehensive Documentation
+  - Acceptance: README, architecture, API, deployment, AI, development guides complete
+  - Verify: Review all docs, follow guides
+  - Files: `README.md`, `docs/*.md` (7 files)
+
+- [ ] Task 29: End-to-End Testing
+  - Acceptance: CLI, Web UI, image gen, checkpoint, export E2E tests pass
+  - Verify: `pytest tests/e2e/ -v && npm run test:e2e`
+  - Files: `tests/e2e/*.py`, `tests/e2e/*.spec.ts`, `playwright.config.ts`
+
+- [ ] Task 30: Performance Optimization & Security Audit
+  - Acceptance: Performance targets met, no critical vulnerabilities, security documented
+  - Verify: `make security && pytest tests/performance/ -v`
+  - Files: `tests/performance/*.py`, `docs/SECURITY.md`
+
+### Final Checkpoint: Production Ready
+- [ ] All tests pass (95%+ coverage)
+- [ ] All E2E tests pass
+- [ ] Performance + security targets met
+- [ ] All 7 Docker services running
+- [ ] phpMyAdmin at localhost:8080
+- [ ] Web UI at localhost:3000
+- [ ] API at localhost:8000
+- [ ] Documentation complete
+- [ ] Manual: Complete novel generation with images
 
 ---
 
 ## Summary
 
-**Total Tasks:** 25
-**Estimated Total Scope:** ~3500-4000 lines of code
-**Phases:** 7
-**Checkpoints:** 7
-**Key Deliverables:**
-- Working Python CLI orchestrator
-- 15 mock agents with realistic outputs
-- Story Bible JSON persistence
-- Human checkpoint system
-- Comprehensive tests and documentation
+**Total Tasks**: 30
+**Timeline**: 6 weeks (5 phases)
+**Estimated Effort**: 200-250 hours
+
+**Key Milestones**:
+1. Week 2: AI Integration Complete
+2. Week 3: Database Layer Complete
+3. Week 4: API & Workers Complete
+4. Week 5: Web UI Complete
+5. Week 6: Production Ready
+
+**Tech Stack**:
+- Backend: Python 3.10+, FastAPI, SQLAlchemy, Celery
+- Frontend: Next.js 14+, shadcn/ui, Tailwind CSS
+- Database: MySQL 8.0 + phpMyAdmin
+- Cache: Redis 7+
+- AI: Mistral (text + Pixtral images) + OpenAI fallback
+- Deployment: Docker Compose (7 containers)
