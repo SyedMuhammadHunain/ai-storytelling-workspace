@@ -69,10 +69,20 @@ class Chapter(Base):
     
     status = Column(
         SQLEnum(ChapterStatus),
-        default=ChapterStatus.PLANNED,
         nullable=False,
         index=True,
+        server_default="planned",
     )
+    
+    def __init__(self, **kwargs):
+        """Initialize with defaults if not provided."""
+        if 'status' not in kwargs:
+            kwargs['status'] = ChapterStatus.PLANNED
+        if 'word_count' not in kwargs:
+            kwargs['word_count'] = 0
+        if 'target_word_count' not in kwargs:
+            kwargs['target_word_count'] = 3000
+        super().__init__(**kwargs)
     
     # Story structure
     goal = Column(Text, nullable=True)
@@ -84,9 +94,10 @@ class Chapter(Base):
     
     def __repr__(self) -> str:
         """String representation."""
+        status_value = self.status.value if self.status else None
         return (
             f"<Chapter(id={self.id}, number={self.chapter_number}, "
-            f"title={self.title}, status={self.status})>"
+            f"title={self.title}, status={status_value})>"
         )
     
     def update_word_count(self) -> None:

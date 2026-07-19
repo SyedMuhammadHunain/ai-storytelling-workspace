@@ -67,15 +67,25 @@ class WorkflowState(Base):
     
     status = Column(
         SQLEnum(WorkflowStatus),
-        default=WorkflowStatus.RUNNING,
         nullable=False,
         index=True,
+        server_default="running",
     )
     
     # Progress tracking
     total_steps = Column(Integer, nullable=False)
-    completed_steps = Column(Integer, default=0, nullable=False)
-    progress_percentage = Column(DECIMAL(5, 2), default=Decimal("0.00"), nullable=False)
+    completed_steps = Column(Integer, nullable=False, server_default="0")
+    progress_percentage = Column(DECIMAL(5, 2), nullable=False, server_default="0.00")
+    
+    def __init__(self, **kwargs):
+        """Initialize with defaults if not provided."""
+        if 'status' not in kwargs:
+            kwargs['status'] = WorkflowStatus.RUNNING
+        if 'completed_steps' not in kwargs:
+            kwargs['completed_steps'] = 0
+        if 'progress_percentage' not in kwargs:
+            kwargs['progress_percentage'] = Decimal("0.00")
+        super().__init__(**kwargs)
     
     # State snapshot (JSON for flexibility)
     state_data = Column(JSON, nullable=True)

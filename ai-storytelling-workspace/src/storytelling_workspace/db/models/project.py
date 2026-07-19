@@ -55,10 +55,16 @@ class Project(Base):
     # Status
     status = Column(
         SQLEnum(ProjectStatus),
-        default=ProjectStatus.DRAFT,
         nullable=False,
         index=True,
+        server_default="draft",
     )
+    
+    def __init__(self, **kwargs):
+        """Initialize with default status if not provided."""
+        if 'status' not in kwargs:
+            kwargs['status'] = ProjectStatus.DRAFT
+        super().__init__(**kwargs)
     
     # Soft delete
     deleted_at = Column(DateTime, nullable=True, index=True)
@@ -101,7 +107,8 @@ class Project(Base):
     
     def __repr__(self) -> str:
         """String representation."""
-        return f"<Project(id={self.id}, name={self.name}, status={self.status})>"
+        status_value = self.status.value if self.status else None
+        return f"<Project(id={self.id}, name={self.name}, status={status_value})>"
     
     @property
     def is_deleted(self) -> bool:

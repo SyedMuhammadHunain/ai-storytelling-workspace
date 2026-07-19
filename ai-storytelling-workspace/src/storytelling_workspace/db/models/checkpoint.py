@@ -88,10 +88,16 @@ class Checkpoint(Base):
     # Checkpoint state
     status = Column(
         SQLEnum(CheckpointStatus),
-        default=CheckpointStatus.PENDING,
         nullable=False,
         index=True,
+        server_default="pending",
     )
+    
+    def __init__(self, **kwargs):
+        """Initialize with default status if not provided."""
+        if 'status' not in kwargs:
+            kwargs['status'] = CheckpointStatus.PENDING
+        super().__init__(**kwargs)
     
     # Content snapshot (JSON for flexibility)
     content = Column(JSON, nullable=False)

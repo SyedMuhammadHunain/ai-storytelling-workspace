@@ -66,7 +66,7 @@ class StoryBible(Base):
     # Metadata sections
     terminology = Column(JSON, nullable=True)
     style_guide = Column(JSON, nullable=True)
-    metadata = Column(JSON, nullable=True)
+    story_metadata = Column(JSON, nullable=True)  # Renamed from 'metadata' to avoid SQLAlchemy conflict
     
     # Relationships
     project = relationship("Project", back_populates="story_bibles")
