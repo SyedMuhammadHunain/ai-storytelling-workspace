@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 from ..config import settings
 from ..db.session import init_db, close_db
 from .exceptions import APIException
-from .middleware import LoggingMiddleware, ErrorHandlerMiddleware
+from .middleware import LoggingMiddleware, ErrorHandlerMiddleware, RateLimitMiddleware
 
 # Configure structured logging
 logging.basicConfig(
@@ -79,7 +79,10 @@ app.add_middleware(
     expose_headers=["X-Process-Time"],
 )
 
-# 3. Request/response logging
+# 3. Rate Limiting (100 requests per minute by default)
+app.add_middleware(RateLimitMiddleware, requests_per_minute=100)
+
+# 4. Request/response logging
 app.add_middleware(LoggingMiddleware)
 
 # 4. Error handling (innermost - catches all exceptions)

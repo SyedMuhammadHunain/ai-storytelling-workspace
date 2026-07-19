@@ -252,14 +252,41 @@ async def get_project_stats(
     bible = await story_bible_repo.get_latest_by_project(str(project_id))
     bible_version = bible.version if bible else 0
     
-    # TODO: Calculate actual stats from related tables
-    # For now, return placeholder values
+    from sqlalchemy import select, func
+    from storytelling_workspace.db.models.chapter import Chapter
+    from storytelling_workspace.db.models.image import Image
+    from storytelling_workspace.db.models.checkpoint import Checkpoint
+    
+    word_count = 0
+    chapter_count = 0
+    
+    if bible:
+        # Get word count and chapter count
+        chapter_stmt = select(func.count(Chapter.id), func.sum(Chapter.word_count)).where(
+            Chapter.story_bible_id == str(bible.id)
+        )
+        ch_result = await project_repo.session.execute(chapter_stmt)
+        ch_row = ch_result.first()
+        if ch_row:
+            chapter_count = ch_row[0] or 0
+            word_count = ch_row[1] or 0
+            
+    # Get image count
+    img_stmt = select(func.count(Image.id)).where(Image.project_id == str(project_id))
+    img_result = await project_repo.session.execute(img_stmt)
+    image_count = img_result.scalar() or 0
+    
+    # Get checkpoint count
+    cp_stmt = select(func.count(Checkpoint.id)).where(Checkpoint.project_id == str(project_id))
+    cp_result = await project_repo.session.execute(cp_stmt)
+    checkpoint_count = cp_result.scalar() or 0
+
     return ProjectStatsResponse(
         project_id=project_id,
         status=project.status,
-        word_count=0,  # TODO: Calculate from chapters
-        chapter_count=0,  # TODO: Count chapters
-        image_count=0,  # TODO: Count images
-        checkpoint_count=0,  # TODO: Count checkpoints
+        word_count=word_count,
+        chapter_count=chapter_count,
+        image_count=image_count,
+        checkpoint_count=checkpoint_count,
         bible_version=bible_version
     )

@@ -62,3 +62,12 @@ logs/
 *.sql.gz
 *.sql.bak
 mysql_data/
+
+# Frontend & E2E Testing
+node_modules/
+.angular/
+playwright-report/
+test-results/
+blob-report/
+coverage/
+*.tsbuildinfo

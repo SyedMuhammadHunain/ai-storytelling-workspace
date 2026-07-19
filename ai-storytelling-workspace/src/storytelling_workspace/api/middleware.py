@@ -167,47 +167,33 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
             )
 
 
-class CORSHeadersMiddleware(BaseHTTPMiddleware):
+class RateLimitMiddleware(BaseHTTPMiddleware):
     """
-    Middleware to add CORS headers to responses.
-    
-    Note: This is a fallback. Prefer using FastAPI's CORSMiddleware.
+    Middleware for basic IP-based rate limiting.
     """
     
-    def __init__(self, app, allowed_origins: list[str] = None):
-        """
-        Initialize CORS middleware.
-        
-        Args:
-            app: FastAPI application
-            allowed_origins: List of allowed origins (default: ["*"])
-        """
+    def __init__(self, app, requests_per_minute: int = 100):
         super().__init__(app)
-        self.allowed_origins = allowed_origins or ["*"]
-    
-    async def dispatch(
-        self,
-        request: Request,
-        call_next: Callable
-    ) -> Response:
-        """
-        Add CORS headers to response.
+        self.requests_per_minute = requests_per_minute
+        from collections import defaultdict
+        self.clients = defaultdict(list)
         
-        Args:
-            request: Incoming HTTP request
-            call_next: Next middleware/handler in chain
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        client_ip = request.client.host if request.client else "unknown"
+        now = time.time()
+        
+        # Clean up requests older than 1 minute
+        self.clients[client_ip] = [t for t in self.clients[client_ip] if now - t < 60]
+        
+        if len(self.clients[client_ip]) >= self.requests_per_minute:
+            logger.warning(f"Rate limit exceeded for IP: {client_ip}")
+            return JSONResponse(
+                status_code=429,
+                content={
+                    "error": "Too Many Requests",
+                    "message": "Rate limit exceeded. Please try again later."
+                }
+            )
             
-        Returns:
-            HTTP response with CORS headers
-        """
-        response = await call_next(request)
-        
-        # Add CORS headers
-        origin = request.headers.get("origin")
-        if origin and (origin in self.allowed_origins or "*" in self.allowed_origins):
-            response.headers["Access-Control-Allow-Origin"] = origin
-            response.headers["Access-Control-Allow-Credentials"] = "true"
-            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-            response.headers["Access-Control-Allow-Headers"] = "*"
-        
-        return response
+        self.clients[client_ip].append(now)
+        return await call_next(request)
