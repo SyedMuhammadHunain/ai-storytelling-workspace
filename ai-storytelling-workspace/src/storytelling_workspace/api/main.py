@@ -220,7 +220,7 @@ async def websocket_endpoint(websocket: WebSocket, project_id: str):
 
 
 # Include routers
-from .routes import projects, workflow
+from .routes import projects, workflow, checkpoints, images, story_bible
 
 app.include_router(
     projects.router,
@@ -234,32 +234,23 @@ app.include_router(
     tags=["Workflow"]
 )
 
-# Additional routers will be added as implemented:
-# from .routes import checkpoints, images, story_bible
-# 
-# app.include_router(
-#     workflow.router,
-#     prefix="/api/workflow",
-#     tags=["Workflow"]
-# )
-# 
-# app.include_router(
-#     checkpoints.router,
-#     prefix="/api/checkpoints",
-#     tags=["Checkpoints"]
-# )
-# 
-# app.include_router(
-#     images.router,
-#     prefix="/api/images",
-#     tags=["Images"]
-# )
-# 
-# app.include_router(
-#     story_bible.router,
-#     prefix="/api/story-bible",
-#     tags=["Story Bible"]
-# )
+app.include_router(
+    checkpoints.router,
+    prefix="/api/checkpoints",
+    tags=["Checkpoints"]
+)
+
+app.include_router(
+    images.router,
+    prefix="/api/images",
+    tags=["Images"]
+)
+
+app.include_router(
+    story_bible.router,
+    prefix="/api/story-bible",
+    tags=["Story Bible"]
+)
 
 
 if __name__ == "__main__":

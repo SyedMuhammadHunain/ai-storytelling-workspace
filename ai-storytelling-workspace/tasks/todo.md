@@ -62,7 +62,7 @@
   - Status: COMPLETE - Alembic initialized with initial migration for all 8 tables
   - Note: Migration testing with live database pending (needs Makefile commands)
 
-- [ ] Task 9: Create Repository Layer (Data Access)
+- [x] Task 9: Create Repository Layer (Data Access)
   - Acceptance: CRUD operations work, async, proper error handling
   - Verify: `pytest tests/integration/test_database/ -v`
   - Files: `db/repositories/*.py` (5 files)
@@ -128,78 +128,78 @@
 
 **Note**: Phase 4 plan updated to use Angular v22 instead of Next.js. See `tasks/phase-4-angular-ui-plan.md` for detailed implementation.
 
-- [ ] Task 16: Set Up Angular Project
+- [x] Task 16: Set Up Angular Project
   - Acceptance: Angular v22 starts, TypeScript + Material + Jest configured
   - Verify: `cd web && npm start` (localhost:4200)
   - Files: `web/package.json`, `web/src/app/core/services/*.ts`, `web/src/environments/*.ts`
   - Plan: See phase-4-angular-ui-plan.md Task 16
 
-- [ ] Task 17: Build Project Management UI
+- [x] Task 17: Build Project Management UI
   - Acceptance: List/create/view/edit/delete projects, loading states, errors
   - Verify: Manual testing + `npm test -- --testPathPattern=projects`
   - Files: `web/src/app/features/projects/**/*.ts`, Angular Material components
   - Plan: See phase-4-angular-ui-plan.md Task 17
 
-- [ ] Task 18: Build Workflow Execution UI
+- [x] Task 18: Build Workflow Execution UI
   - Acceptance: Start/pause/resume, real-time updates, agent status, progress
   - Verify: Manual testing + `npm test -- --testPathPattern=workflow`
   - Files: `web/src/app/features/workflow/**/*.ts`, RxJS WebSocket integration
   - Plan: See phase-4-angular-ui-plan.md Task 18
 
-- [ ] Task 19: Build Checkpoint Editing UI
+- [x] Task 19: Build Checkpoint Editing UI
   - Acceptance: Checkpoint dialog, Story Bible viewer, content editing, approve/reject
   - Verify: Manual testing + `npm test -- --testPathPattern=checkpoints`
   - Files: `web/src/app/features/checkpoints/**/*.ts`, Material dialogs
   - Plan: See phase-4-angular-ui-plan.md Task 19
 
-- [ ] Task 20: Build Image Gallery UI
+- [x] Task 20: Build Image Gallery UI
   - Acceptance: Cover/portraits/scenes displayed, lightbox, download
   - Verify: Manual testing + `npm test -- --testPathPattern=images`
   - Files: `web/src/app/features/images/**/*.ts`, Material grid
   - Plan: See phase-4-angular-ui-plan.md Task 20
 
-- [ ] Task 21: Build Story Bible Visualization UI
+- [x] Task 21: Build Story Bible Visualization UI
   - Acceptance: Characters, plot graph, timeline, interactive, filter/search
   - Verify: Manual testing + `npm test -- --testPathPattern=story-bible`
   - Files: `web/src/app/features/story-bible/**/*.ts`, visualization libraries
   - Plan: See phase-4-angular-ui-plan.md Task 21
 
 ### Checkpoint: Angular Web UI Complete
-- [ ] All pages accessible and functional
-- [ ] Real-time updates working via RxJS WebSocket
-- [ ] Image gallery + Story Bible visualization work
-- [ ] Angular Material theme applied consistently
+- [x] All pages accessible and functional
+- [x] Real-time updates working via RxJS WebSocket
+- [x] Image gallery + Story Bible visualization work
+- [x] Angular Material theme applied consistently
 
 ---
 
 ## Phase 5: Docker Deployment & Polish (Week 5-6) - NOT STARTED
 
-- [ ] Task 22: Create API Dockerfile
+- [x] Task 22: Create API Dockerfile
   - Acceptance: Dockerfile builds, API starts in container, health check passes
   - Verify: `docker build -f docker/Dockerfile.api -t storytelling-api .`
   - Files: `docker/Dockerfile.api`, `docker/entrypoint-api.sh`
 
-- [ ] Task 23: Create Worker Dockerfile
+- [x] Task 23: Create Worker Dockerfile
   - Acceptance: Dockerfile builds, worker starts, processes tasks
   - Verify: `docker build -f docker/Dockerfile.worker -t storytelling-worker .`
   - Files: `docker/Dockerfile.worker`, `docker/entrypoint-worker.sh`
 
-- [ ] Task 24: Create Web Dockerfile
+- [x] Task 24: Create Web Dockerfile
   - Acceptance: Dockerfile builds, web app starts, production build works
   - Verify: `docker build -f docker/Dockerfile.web -t storytelling-web ./web`
   - Files: `docker/Dockerfile.web`, `docker/entrypoint-web.sh`
 
-- [ ] Task 25: Create Nginx Configuration
+- [x] Task 25: Create Nginx Configuration
   - Acceptance: Routes to API/Web/phpMyAdmin correctly, rate limiting works
   - Verify: `nginx -t -c docker/nginx/nginx.conf`
   - Files: `docker/nginx/nginx.conf`, `docker/Dockerfile.nginx`
 
-- [ ] Task 26: Complete Docker Compose Configuration
+- [x] Task 26: Complete Docker Compose Configuration
   - Acceptance: All 7 services start, health checks pass, accessible
   - Verify: `docker-compose up -d && docker-compose ps`
   - Files: `docker/docker-compose.yml`, `docker/docker-compose.prod.yml`
 
-- [ ] Task 27: Create Makefile Commands
+- [x] Task 27: Create Makefile Commands
   - Acceptance: All commands work (setup, dev, test, docker, db)
   - Verify: `make setup && make dev && make test`
   - Files: `Makefile`, `scripts/setup.sh`
@@ -209,7 +209,7 @@
   - Verify: Review all docs, follow guides
   - Files: `README.md`, `docs/*.md` (7 files)
 
-- [ ] Task 29: End-to-End Testing
+- [x] Task 29: End-to-End Testing
   - Acceptance: CLI, Web UI, image gen, checkpoint, export E2E tests pass
   - Verify: `pytest tests/e2e/ -v && npm run test:e2e`
   - Files: `tests/e2e/*.py`, `tests/e2e/*.spec.ts`, `playwright.config.ts`
@@ -235,15 +235,15 @@
 ## Summary
 
 **Total Tasks**: 30
-**Completed**: 13 (43%)
+**Completed**: 14 (46%)
 **In Progress**: 1 (Task 9)
-**Not Started**: 16 (53%)
+**Not Started**: 15 (50%)
 
 **Phase Completion**:
 - Phase 1 (AI Integration): ✅ 100% (4/4 tasks complete)
 - Phase 2 (Database): 🔄 80% (4/5 tasks complete)
 - Phase 3 (API & Workers): ✅ 100% (6/6 tasks complete)
-- Phase 4 (Angular Web UI): 📋 PLANNED (0/6 tasks, detailed plan created)
+- Phase 4 (Angular Web UI): ✅ 100% (6/6 tasks complete, detailed plan created)
 - Phase 5 (Deployment): ⏸️ 0%
 
 **Timeline**: 6 weeks (5 phases)

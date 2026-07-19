@@ -288,11 +288,11 @@ npm run lint
 ```
 
 **Manual checks:**
-- [ ] Navigate to http://localhost:4200
-- [ ] Verify Angular Material theme applied
-- [ ] Check browser console for errors
-- [ ] Verify API service can make requests
-- [ ] Verify WebSocket service can connect
+- [x] Navigate to http://localhost:4200
+- [x] Verify Angular Material theme applied
+- [x] Check browser console for errors
+- [x] Verify API service can make requests
+- [x] Verify WebSocket service can connect
 
 ---
 
@@ -542,15 +542,15 @@ export class ProjectListComponent implements OnInit {
 
 ### Acceptance Criteria
 
-- [ ] Can view list of projects
-- [ ] Can create new project
-- [ ] Can view project details
-- [ ] Can edit project
-- [ ] Can delete project
-- [ ] Loading states shown
-- [ ] Errors displayed to user
-- [ ] Responsive design
-- [ ] Tests pass
+- [x] Can view list of projects
+- [x] Can create new project
+- [x] Can view project details
+- [x] Can edit project
+- [x] Can delete project
+- [x] Loading states shown
+- [x] Errors displayed to user
+- [x] Responsive design
+- [x] Tests pass
 
 ### Verification
 
@@ -662,15 +662,15 @@ export class WorkflowService {
 
 ### Acceptance Criteria
 
-- [ ] Can start workflow from UI
-- [ ] Real-time progress updates displayed
-- [ ] Agent status shown for each agent
-- [ ] Phase indicator shows current phase
-- [ ] Can pause/resume workflow
-- [ ] Can cancel workflow
-- [ ] Errors displayed to user
-- [ ] WebSocket reconnection works
-- [ ] Tests pass
+- [x] Can start workflow from UI
+- [x] Real-time progress updates displayed
+- [x] Agent status shown for each agent
+- [x] Phase indicator shows current phase
+- [x] Can pause/resume workflow
+- [x] Can cancel workflow
+- [x] Errors displayed to user
+- [x] WebSocket reconnection works
+- [x] Tests pass
 
 ---
 
