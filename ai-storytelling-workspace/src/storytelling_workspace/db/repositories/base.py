@@ -190,20 +190,80 @@ class BaseRepository(Generic[ModelType]):
         instance = await self.get_by_id(id)
         return instance is not None
     
-    async def count(self) -> int:
+    async def count(self, filters: Optional[Dict[str, Any]] = None) -> int:
         """
-        Count total records.
+        Count total records with optional filters.
+        
+        Args:
+            filters: Optional field name and value pairs for filtering
         
         Returns:
-            Total number of records
+            Total number of records matching filters
         """
         stmt = select(self.model)
+        
+        # Apply filters
+        if filters:
+            for key, value in filters.items():
+                if hasattr(self.model, key):
+                    stmt = stmt.where(getattr(self.model, key) == value)
+        
         result = await self.session.execute(stmt)
         instances = result.scalars().all()
         count = len(instances)
         
         self.logger.debug(f"Counted {count} {self.model.__name__} records")
         return count
+    
+    async def list(
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        filters: Optional[Dict[str, Any]] = None,
+        order_by: Optional[str] = None
+    ) -> List[ModelType]:
+        """
+        List records with pagination and filtering.
+        
+        Args:
+            skip: Number of records to skip
+            limit: Maximum number of records to return
+            filters: Optional field name and value pairs for filtering
+            order_by: Field name to order by (prefix with '-' for descending)
+            
+        Returns:
+            List of model instances
+        """
+        stmt = select(self.model)
+        
+        # Apply filters
+        if filters:
+            for key, value in filters.items():
+                if hasattr(self.model, key):
+                    stmt = stmt.where(getattr(self.model, key) == value)
+        
+        # Apply ordering
+        if order_by:
+            if order_by.startswith('-'):
+                # Descending order
+                field = order_by[1:]
+                stmt = stmt.order_by(getattr(self.model, field).desc())
+            else:
+                # Ascending order
+                stmt = stmt.order_by(getattr(self.model, order_by))
+        else:
+            # Default ordering by updated_at desc if available
+            if hasattr(self.model, 'updated_at'):
+                stmt = stmt.order_by(self.model.updated_at.desc())
+        
+        # Apply pagination
+        stmt = stmt.offset(skip).limit(limit)
+        
+        result = await self.session.execute(stmt)
+        instances = result.scalars().all()
+        
+        self.logger.debug(f"Listed {len(instances)} {self.model.__name__} records")
+        return list(instances)
     
     async def filter_by(self, **kwargs) -> List[ModelType]:
         """

@@ -60,10 +60,13 @@ class Settings(BaseSettings):
     API_WORKERS: int = int(os.getenv("API_WORKERS", "4"))
     
     # CORS
-    CORS_ORIGINS: list[str] = os.getenv(
-        "CORS_ORIGINS",
-        "http://localhost:3000,http://localhost:8000"
-    ).split(",")
+    CORS_ORIGINS: list[str] = [
+        origin.strip() 
+        for origin in os.getenv(
+            "CORS_ORIGINS",
+            "http://localhost:3000,http://localhost:8000"
+        ).split(",")
+    ]
     
     # Celery
     CELERY_BROKER_URL: str = os.getenv(
@@ -83,13 +86,19 @@ class Settings(BaseSettings):
         """Pydantic config."""
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"  # Ignore extra fields from .env
 
 
 # Global settings instance
 settings = Settings()
 
 
-# Ensure storage directories exist
-settings.STORAGE_PATH.mkdir(parents=True, exist_ok=True)
-settings.IMAGES_PATH.mkdir(parents=True, exist_ok=True)
-settings.EXPORTS_PATH.mkdir(parents=True, exist_ok=True)
+# Ensure storage directories exist (only if writable)
+try:
+    settings.STORAGE_PATH.mkdir(parents=True, exist_ok=True)
+    settings.IMAGES_PATH.mkdir(parents=True, exist_ok=True)
+    settings.EXPORTS_PATH.mkdir(parents=True, exist_ok=True)
+except (PermissionError, OSError) as e:
+    # Skip directory creation if not writable (e.g., in Docker build)
+    import logging
+    logging.warning(f"Could not create storage directories: {e}")

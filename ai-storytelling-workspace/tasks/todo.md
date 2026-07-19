@@ -21,11 +21,11 @@
   - Status: COMPLETE - AIAgent base class created, comprehensive prompt templates in utils/prompts.py, all 18 agents now use real AI
   - Note: Agent tests need updating to mock AIProvider instead of direct API calls
 
-- [ ] Task 4: Create Image Generator Agent
+- [x] Task 4: Create Image Generator Agent ✅
   - Acceptance: Cover art, portraits, scene illustrations generated
-  - Verify: `pytest tests/unit/test_agents/test_image_generator.py -v`
-  - Files: `agents/ai_image_generator.py` (exists but needs verification), `orchestrator.py`
-  - Status: PARTIAL - ai_image_generator.py exists but needs testing and integration verification
+  - Verify: `pytest tests/unit/test_agents/test_image_generator.py -v` ✅ 16/16 tests passed
+  - Files: `agents/ai_image_generator.py`, `orchestrator.py`, `utils/image_prompts.py`
+  - Status: COMPLETE - All image generation features implemented and tested
 
 ### Checkpoint: AI Integration Complete ✅
 - [x] All tests pass with 95%+ coverage

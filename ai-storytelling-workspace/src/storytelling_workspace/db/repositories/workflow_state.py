@@ -238,3 +238,94 @@ class WorkflowStateRepository(BaseRepository[WorkflowState]):
         
         self.logger.info(f"Created new workflow state for project {project_id_str}")
         return state, True
+    
+    async def get_active_by_project(self, project_id: str | UUID) -> Optional[WorkflowState]:
+        """
+        Get active (running or paused) workflow for a project.
+        
+        Args:
+            project_id: Project ID
+            
+        Returns:
+            Active workflow state or None if not found
+        """
+        project_id_str = str(project_id) if isinstance(project_id, UUID) else project_id
+        
+        stmt = (
+            select(WorkflowState)
+            .where(WorkflowState.project_id == project_id_str)
+            .where(WorkflowState.status.in_([WorkflowStatus.RUNNING, WorkflowStatus.PAUSED]))
+            .order_by(WorkflowState.started_at.desc())
+        )
+        
+        result = await self.session.execute(stmt)
+        state = result.scalar_one_or_none()
+        
+        if state:
+            self.logger.debug(f"Found active workflow for project {project_id_str}")
+        else:
+            self.logger.debug(f"No active workflow found for project {project_id_str}")
+        
+        return state
+    
+    async def get_latest_by_project(self, project_id: str | UUID) -> Optional[WorkflowState]:
+        """
+        Get latest workflow for a project (any status).
+        
+        Args:
+            project_id: Project ID
+            
+        Returns:
+            Latest workflow state or None if not found
+        """
+        project_id_str = str(project_id) if isinstance(project_id, UUID) else project_id
+        
+        stmt = (
+            select(WorkflowState)
+            .where(WorkflowState.project_id == project_id_str)
+            .order_by(WorkflowState.started_at.desc())
+        )
+        
+        result = await self.session.execute(stmt)
+        state = result.scalar_one_or_none()
+        
+        if state:
+            self.logger.debug(f"Found latest workflow for project {project_id_str}")
+        else:
+            self.logger.debug(f"No workflow found for project {project_id_str}")
+        
+        return state
+    
+    async def get_by_project_and_status(
+        self,
+        project_id: str | UUID,
+        status: str
+    ) -> Optional[WorkflowState]:
+        """
+        Get workflow for a project with specific status.
+        
+        Args:
+            project_id: Project ID
+            status: Workflow status
+            
+        Returns:
+            Workflow state or None if not found
+        """
+        project_id_str = str(project_id) if isinstance(project_id, UUID) else project_id
+        
+        stmt = (
+            select(WorkflowState)
+            .where(WorkflowState.project_id == project_id_str)
+            .where(WorkflowState.status == status)
+            .order_by(WorkflowState.started_at.desc())
+        )
+        
+        result = await self.session.execute(stmt)
+        state = result.scalar_one_or_none()
+        
+        if state:
+            self.logger.debug(f"Found workflow with status {status} for project {project_id_str}")
+        else:
+            self.logger.debug(f"No workflow with status {status} found for project {project_id_str}")
+        
+        return state
