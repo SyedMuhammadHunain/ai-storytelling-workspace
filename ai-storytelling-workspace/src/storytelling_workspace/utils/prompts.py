@@ -3,450 +3,457 @@
 from typing import Dict, Any
 
 
-def build_concept_prompt(genre: str, premise: str, tone: str = "engaging") -> str:
+class PromptTemplates:
     """
-    Build prompt for Concept Agent.
+    Centralized prompt templates for all AI agents.
     
-    Args:
-        genre: Book genre
-        premise: Initial premise/idea
-        tone: Desired tone
-        
-    Returns:
-        Formatted prompt
+    Each template is designed to produce consistent, high-quality outputs
+    from the AI models (Mistral/OpenAI).
     """
-    return f"""You are a professional story concept developer. Your task is to expand a brief premise into a compelling book concept.
-
-**Genre:** {genre}
-**Premise:** {premise}
-**Tone:** {tone}
-
-Generate a complete book concept with the following elements:
-
-1. **Logline** (1-2 sentences): A compelling one-sentence summary that captures the essence of the story. Include the protagonist, their goal, and the main obstacle.
-
-2. **Central Conflict**: The primary struggle or challenge that drives the narrative. What is at stake? What must be overcome?
-
-3. **Theme**: The deeper meaning or message of the story. What universal truth or question does it explore?
-
-Format your response as JSON:
-{{
-  "logline": "...",
-  "central_conflict": "...",
-  "theme": "..."
-}}
-
-Make it compelling, original, and appropriate for the {genre} genre."""
-
-
-def build_character_prompt(
-    concept_logline: str,
-    theme: str,
-    genre: str,
-    character_role: str = "protagonist"
-) -> str:
-    """
-    Build prompt for Character Agent.
     
-    Args:
-        concept_logline: Story logline for context
-        theme: Story theme
-        genre: Book genre
-        character_role: Role (protagonist, antagonist, supporting)
-        
-    Returns:
-        Formatted prompt
-    """
-    return f"""You are a professional character developer. Create a detailed character profile for a {genre} story.
+    # ============================================================================
+    # INTAKE AGENT
+    # ============================================================================
+    
+    INTAKE_BRIEF = """You are a professional book development consultant helping an author create a comprehensive book brief.
 
-**Story Context:**
-- Logline: {concept_logline}
-- Theme: {theme}
+Based on the following initial information:
 - Genre: {genre}
+- Premise: {premise}
+- Target Word Count: {target_word_count}
+- Target Audience: {target_audience}
+- Tone: {tone}
 
-**Character Role:** {character_role}
+Create a detailed book brief that includes:
+1. A refined premise statement (2-3 sentences)
+2. Key themes to explore
+3. Narrative approach recommendations
+4. Potential challenges and how to address them
 
-Create a compelling {character_role} character with:
+Format your response as a structured brief that will guide the entire book development process.
 
-1. **Name**: Memorable and appropriate for the genre
-2. **Physical Description**: Age, appearance, distinctive features
-3. **Backstory**: Key events that shaped them (2-3 sentences)
-4. **Goals**: What they want (3 specific goals)
-5. **Flaws**: Weaknesses or limitations (3 specific flaws)
-6. **Character Arc**: How they change throughout the story
-7. **Voice Signature**: How they speak and express themselves
+Be specific, actionable, and aligned with the genre conventions."""
 
-Format as JSON:
-{{
-  "name": "...",
-  "role": "{character_role}",
-  "physical_description": "...",
-  "backstory": "...",
-  "goals": ["...", "...", "..."],
-  "flaws": ["...", "...", "..."],
-  "arc": "...",
-  "voice_signature": "..."
-}}
-
-Make the character complex, believable, and integral to the story's theme."""
-
-
-def build_worldbuilding_prompt(
-    concept_logline: str,
-    genre: str,
-    characters: list,
-    setting_type: str = "detailed"
-) -> str:
-    """
-    Build prompt for Worldbuilding Agent.
+    # ============================================================================
+    # CONCEPT AGENT
+    # ============================================================================
     
-    Args:
-        concept_logline: Story logline
-        genre: Book genre
-        characters: List of character names
-        setting_type: Level of detail needed
-        
-    Returns:
-        Formatted prompt
-    """
-    characters_str = ", ".join(characters) if characters else "the characters"
+    CONCEPT_DEVELOPMENT = """You are a story concept developer. Based on this book brief:
+
+Genre: {genre}
+Premise: {premise}
+Tone: {tone}
+
+Develop a compelling story concept that includes:
+
+1. **Logline** (1-2 sentences): A concise, compelling summary that captures the essence of the story
+2. **Central Conflict**: The main problem or challenge the protagonist must overcome
+3. **Theme**: The deeper meaning or message the story explores
+4. **Unique Hook**: What makes this story stand out in its genre
+
+Ensure the concept is:
+- Emotionally engaging
+- Genre-appropriate
+- Commercially viable
+- Thematically rich
+
+Format your response clearly with each section labeled."""
+
+    # ============================================================================
+    # WORLDBUILDING AGENT
+    # ============================================================================
     
-    return f"""You are a professional worldbuilding expert. Create a rich, immersive world for this {genre} story.
+    WORLDBUILDING = """You are a worldbuilding specialist. Based on this story concept:
 
-**Story Context:**
-- Logline: {concept_logline}
-- Genre: {genre}
-- Main Characters: {characters_str}
+Genre: {genre}
+Logline: {logline}
+Theme: {theme}
+Setting: {setting}
 
-Create a {setting_type} world with:
+Create a rich, immersive world that includes:
 
-1. **Primary Setting**: Main location(s) where the story takes place
-2. **Time Period**: When the story occurs (historical, contemporary, future, etc.)
-3. **World Rules**: Key rules that govern this world (magic systems, technology, social structures, etc.)
-4. **Cultural Elements**: Important customs, beliefs, or social dynamics
-5. **Atmosphere**: The overall feel and mood of the world
+1. **Physical World**: Geography, climate, key locations
+2. **Social Structure**: Government, economy, social classes
+3. **Culture**: Customs, beliefs, traditions, language
+4. **History**: Key historical events that shaped this world
+5. **Rules**: Magic systems, technology, or other unique elements
+6. **Atmosphere**: The overall feel and mood of the world
 
-Format as JSON:
-{{
-  "primary_setting": "...",
-  "time_period": "...",
-  "world_rules": ["...", "...", "..."],
-  "cultural_elements": ["...", "...", "..."],
-  "atmosphere": "..."
-}}
+Make the world feel:
+- Internally consistent
+- Relevant to the story
+- Rich in sensory details
+- Grounded in the genre conventions
 
-Make the world feel lived-in, consistent, and integral to the story."""
+Provide specific, vivid details that will bring this world to life."""
 
-
-def build_plot_prompt(
-    concept_logline: str,
-    theme: str,
-    characters: Dict[str, str],
-    target_chapters: int = 30
-) -> str:
-    """
-    Build prompt for Plot Architect Agent.
+    # ============================================================================
+    # CHARACTER AGENT
+    # ============================================================================
     
-    Args:
-        concept_logline: Story logline
-        theme: Story theme
-        characters: Dict of character names and roles
-        target_chapters: Target number of chapters
-        
-    Returns:
-        Formatted prompt
-    """
-    characters_str = "\n".join([f"- {name} ({role})" for name, role in characters.items()])
+    CHARACTER_DEVELOPMENT = """You are a character development expert. Based on this story:
+
+Genre: {genre}
+Logline: {logline}
+Central Conflict: {central_conflict}
+World: {world_summary}
+
+Create {num_characters} fully-developed characters:
+
+For each character, provide:
+
+1. **Name**: Appropriate for the world/genre
+2. **Role**: Protagonist, antagonist, or supporting character
+3. **Physical Description**: Age, appearance, distinctive features
+4. **Personality**: Core traits, strengths, flaws
+5. **Background**: Origin, key life events, motivations
+6. **Arc**: How they will change throughout the story
+7. **Relationships**: Connections to other characters
+8. **Voice**: How they speak and express themselves
+
+Make each character:
+- Three-dimensional and complex
+- Distinct from other characters
+- Integral to the plot
+- Emotionally compelling
+
+Focus on creating characters readers will care about."""
+
+    # ============================================================================
+    # PLOT ARCHITECT AGENT
+    # ============================================================================
     
-    return f"""You are a professional plot architect. Create a detailed story structure with {target_chapters} chapters.
+    PLOT_STRUCTURE = """You are a plot architect. Based on this story:
 
-**Story Context:**
-- Logline: {concept_logline}
-- Theme: {theme}
-- Characters:
-{characters_str}
+Genre: {genre}
+Logline: {logline}
+Central Conflict: {central_conflict}
+Characters: {character_summary}
+Target Chapters: {num_chapters}
 
-Create a three-act structure with:
-
-**Act 1 (Setup - Chapters 1-{target_chapters//3}):**
-- Introduce world, characters, and normal life
-- Inciting incident that disrupts the status quo
-- First plot point that launches the main story
-
-**Act 2 (Confrontation - Chapters {target_chapters//3+1}-{2*target_chapters//3}):**
-- Rising action and complications
-- Midpoint twist or revelation
-- Increasing stakes and challenges
-- Second plot point leading to climax
-
-**Act 3 (Resolution - Chapters {2*target_chapters//3+1}-{target_chapters}):**
-- Climax and final confrontation
-- Resolution of main conflict
-- Character transformation complete
-- Denouement
+Create a detailed plot structure with {num_chapters} chapters:
 
 For each chapter, provide:
-1. Chapter number and title
-2. Key events (2-3 sentences)
-3. Character development moments
-4. Plot progression
 
-Format as JSON array:
-[
-  {{
-    "chapter_number": 1,
-    "title": "...",
-    "summary": "...",
-    "key_events": ["...", "..."],
-    "character_moments": ["..."],
-    "act": 1
-  }},
-  ...
-]
+1. **Chapter Number & Title**: Descriptive title
+2. **POV Character**: Who narrates this chapter
+3. **Setting**: Where and when it takes place
+4. **Plot Points**: Key events that happen (3-5 bullet points)
+5. **Character Development**: How characters change or reveal themselves
+6. **Conflict/Tension**: What's at stake
+7. **Chapter Goal**: What this chapter accomplishes for the overall story
+8. **Hook**: How it ends to keep readers engaged
 
-Ensure proper pacing, escalating tension, and satisfying character arcs."""
+Ensure the plot:
+- Follows a clear three-act structure
+- Builds tension progressively
+- Includes setbacks and complications
+- Delivers satisfying character arcs
+- Maintains pacing appropriate to the genre
 
+Create a compelling narrative journey from beginning to end."""
 
-def build_chapter_drafting_prompt(
-    chapter_number: int,
-    chapter_title: str,
-    chapter_summary: str,
-    previous_chapter_summary: str,
-    characters: Dict[str, Dict[str, Any]],
-    world_context: str,
-    target_words: int = 3000
-) -> str:
-    """
-    Build prompt for Chapter Drafting Agent.
+    # ============================================================================
+    # CHAPTER DRAFTING AGENT
+    # ============================================================================
     
-    Args:
-        chapter_number: Chapter number
-        chapter_title: Chapter title
-        chapter_summary: What should happen in this chapter
-        previous_chapter_summary: Summary of previous chapter
-        characters: Character details
-        world_context: World/setting information
-        target_words: Target word count
-        
-    Returns:
-        Formatted prompt
-    """
-    return f"""You are a professional fiction writer. Write Chapter {chapter_number}: "{chapter_title}"
+    CHAPTER_DRAFT = """You are a professional fiction writer. Write Chapter {chapter_number}: "{chapter_title}"
 
-**Chapter Brief:**
-{chapter_summary}
+Story Context:
+- Genre: {genre}
+- Tone: {tone}
+- POV Character: {pov_character}
+- Setting: {setting}
 
-**Previous Chapter:**
+Chapter Outline:
+{chapter_outline}
+
+Previous Chapter Summary:
 {previous_chapter_summary}
 
-**World Context:**
-{world_context}
+Write a complete chapter (approximately {target_words} words) that:
 
-**Target Length:** ~{target_words} words
+1. **Opens Strong**: Hook the reader immediately
+2. **Develops Character**: Show character through action, dialogue, and thought
+3. **Advances Plot**: Move the story forward meaningfully
+4. **Builds Atmosphere**: Use vivid sensory details
+5. **Maintains Voice**: Stay consistent with the character's perspective
+6. **Creates Tension**: Keep readers engaged
+7. **Ends with Impact**: Leave readers wanting more
 
-**Writing Guidelines:**
-1. Show, don't tell - use vivid sensory details
-2. Maintain consistent character voices
-3. Balance action, dialogue, and description
-4. Create engaging scene transitions
-5. End with a hook for the next chapter
-6. Use proper paragraph breaks and pacing
+Writing Guidelines:
+- Show, don't tell
+- Use active voice
+- Vary sentence structure
+- Include dialogue that reveals character
+- Balance action, description, and introspection
+- Maintain genre conventions
+- Write in {tone} tone
 
-Write the complete chapter text. Focus on:
-- Compelling prose that draws readers in
-- Natural dialogue that reveals character
-- Vivid descriptions that immerse readers
-- Proper story progression
-- Emotional resonance
+Write the full chapter now, starting with the opening line."""
 
-Begin writing the chapter now:"""
-
-
-def build_dialogue_prompt(
-    scene_context: str,
-    characters_present: list,
-    character_voices: Dict[str, str],
-    dialogue_purpose: str
-) -> str:
-    """
-    Build prompt for Dialogue/Voice Agent.
+    # ============================================================================
+    # CONTINUITY AGENT
+    # ============================================================================
     
-    Args:
-        scene_context: What's happening in the scene
-        characters_present: List of character names
-        character_voices: Dict of character voice signatures
-        dialogue_purpose: What the dialogue should accomplish
-        
-    Returns:
-        Formatted prompt
-    """
-    voices_str = "\n".join([
-        f"- {name}: {voice}"
-        for name, voice in character_voices.items()
-        if name in characters_present
-    ])
+    CONTINUITY_CHECK = """You are a continuity editor. Review the following chapters for consistency:
+
+Story Bible:
+- Characters: {characters}
+- World Rules: {world_rules}
+- Timeline: {timeline}
+
+Chapters to Review:
+{chapters_text}
+
+Identify any continuity errors or inconsistencies in:
+
+1. **Character Consistency**: Personality, appearance, abilities, knowledge
+2. **Plot Logic**: Cause and effect, timeline, event sequence
+3. **World Rules**: Magic systems, technology, physical laws
+4. **Details**: Names, places, objects, dates
+5. **Tone**: Narrative voice and style consistency
+
+For each issue found, provide:
+- Location (chapter and approximate position)
+- Description of the inconsistency
+- Suggested fix
+- Severity (Critical, Moderate, Minor)
+
+If no issues are found, confirm the chapters are consistent.
+
+Be thorough but focus on issues that would confuse or distract readers."""
+
+    # ============================================================================
+    # DIALOGUE & VOICE AGENT
+    # ============================================================================
     
-    return f"""You are a dialogue specialist. Enhance the dialogue in this scene.
+    DIALOGUE_ENHANCEMENT = """You are a dialogue specialist. Enhance the dialogue in this chapter:
 
-**Scene Context:**
-{scene_context}
+Chapter: {chapter_number}
+Characters Present: {characters}
+Scene Context: {scene_context}
 
-**Characters Present:** {", ".join(characters_present)}
+Current Chapter Text:
+{chapter_text}
 
-**Character Voices:**
-{voices_str}
+Improve the dialogue to:
 
-**Dialogue Purpose:**
-{dialogue_purpose}
+1. **Reveal Character**: Each character should have a distinct voice
+2. **Advance Plot**: Dialogue should move the story forward
+3. **Create Subtext**: What's unsaid is as important as what's said
+4. **Sound Natural**: People don't speak in perfect sentences
+5. **Build Tension**: Conflict and stakes should be present
+6. **Show Emotion**: Feelings should come through naturally
 
-Rewrite the dialogue to:
-1. Match each character's unique voice
-2. Sound natural and authentic
-3. Reveal character through subtext
-4. Advance the plot or deepen relationships
-5. Avoid exposition dumps
-6. Use appropriate tags and beats
+For each dialogue section, provide:
+- Original dialogue
+- Enhanced version
+- Explanation of improvements
 
-Provide the enhanced dialogue with proper formatting."""
+Guidelines:
+- Avoid exposition dumps
+- Use contractions and interruptions
+- Include body language and action beats
+- Vary dialogue tags
+- Cut unnecessary words
+- Make every line count
 
+Provide the enhanced dialogue sections."""
 
-def build_editing_prompt(
-    text: str,
-    editing_focus: str,
-    style_guide: str = "clear, engaging prose"
-) -> str:
-    """
-    Build prompt for editing agents (developmental, line, copy).
+    # ============================================================================
+    # DEVELOPMENTAL EDITOR AGENT
+    # ============================================================================
     
-    Args:
-        text: Text to edit
-        editing_focus: What to focus on (structure, prose, grammar, etc.)
-        style_guide: Style guidelines
-        
-    Returns:
-        Formatted prompt
-    """
-    return f"""You are a professional editor. Review and improve this text.
+    DEVELOPMENTAL_EDIT = """You are a developmental editor. Provide high-level feedback on this manuscript:
 
-**Editing Focus:** {editing_focus}
-**Style Guide:** {style_guide}
+Story Overview:
+- Genre: {genre}
+- Theme: {theme}
+- Target Audience: {target_audience}
 
-**Text to Edit:**
+Manuscript:
+{manuscript_text}
+
+Evaluate and provide feedback on:
+
+1. **Story Structure**: Does the plot flow logically? Are there pacing issues?
+2. **Character Arcs**: Do characters grow and change believably?
+3. **Theme**: Is the theme effectively explored?
+4. **Conflict**: Is the central conflict compelling and well-developed?
+5. **Emotional Impact**: Does the story engage readers emotionally?
+6. **Genre Expectations**: Does it deliver what the genre promises?
+7. **Strengths**: What works really well?
+8. **Weaknesses**: What needs improvement?
+
+For each major issue, provide:
+- Specific examples from the text
+- Why it's a problem
+- Concrete suggestions for improvement
+- Priority level (High, Medium, Low)
+
+Be constructive and specific. Focus on big-picture issues, not line-level edits."""
+
+    # ============================================================================
+    # LINE EDITOR AGENT
+    # ============================================================================
+    
+    LINE_EDIT = """You are a line editor. Improve the prose quality of this text:
+
+Text to Edit:
 {text}
 
+Enhance the writing by:
+
+1. **Clarity**: Make every sentence clear and precise
+2. **Flow**: Improve rhythm and readability
+3. **Word Choice**: Replace weak or repetitive words
+4. **Sentence Variety**: Mix short and long sentences
+5. **Active Voice**: Convert passive constructions
+6. **Conciseness**: Cut unnecessary words
+7. **Imagery**: Strengthen descriptions and metaphors
+8. **Consistency**: Maintain style and tone
+
 Provide:
-1. **Issues Found**: List specific problems
-2. **Suggestions**: Concrete improvements
-3. **Revised Text**: The improved version
+- The edited text
+- Key changes made and why
+- Overall assessment of the prose quality
 
-Focus on:
-- Clarity and readability
-- Consistency and flow
-- Grammar and mechanics
-- Style and voice
-- Pacing and structure
+Preserve the author's voice while elevating the writing quality."""
 
-Format as JSON:
-{{
-  "issues": ["...", "..."],
-  "suggestions": ["...", "..."],
-  "revised_text": "..."
-}}"""
-
-
-def build_continuity_check_prompt(
-    current_text: str,
-    story_bible_summary: str,
-    check_type: str = "comprehensive"
-) -> str:
-    """
-    Build prompt for Continuity Agent.
+    # ============================================================================
+    # COPY EDITOR AGENT
+    # ============================================================================
     
-    Args:
-        current_text: Text to check
-        story_bible_summary: Summary of established facts
-        check_type: Type of check (character, plot, world, comprehensive)
+    COPY_EDIT = """You are a copy editor. Review this text for technical correctness:
+
+Text:
+{text}
+
+Check for:
+
+1. **Grammar**: Subject-verb agreement, tense consistency, pronoun usage
+2. **Punctuation**: Commas, periods, quotation marks, apostrophes
+3. **Spelling**: Typos and misspellings
+4. **Capitalization**: Proper nouns, titles, sentence starts
+5. **Style Consistency**: Formatting, numbers, abbreviations
+6. **Factual Accuracy**: Dates, names, places (if verifiable)
+
+For each error found, provide:
+- Location in text
+- Error type
+- Correction
+- Brief explanation if needed
+
+If the text is clean, confirm it's ready for publication.
+
+Be thorough but don't change the author's style or voice."""
+
+    # ============================================================================
+    # PROOFREADER AGENT
+    # ============================================================================
+    
+    PROOFREAD = """You are a proofreader. Perform a final check of this text:
+
+Text:
+{text}
+
+Look for:
+
+1. **Typos**: Misspelled words, extra spaces, missing letters
+2. **Formatting**: Inconsistent indentation, spacing, line breaks
+3. **Punctuation**: Missing or incorrect punctuation marks
+4. **Consistency**: Hyphenation, capitalization, number formatting
+5. **Layout**: Chapter breaks, scene breaks, paragraph structure
+
+List every error found with:
+- Exact location
+- Current text
+- Corrected text
+
+This is the final pass before publication. Be meticulous."""
+
+    # ============================================================================
+    # FRONT MATTER AGENT
+    # ============================================================================
+    
+    FRONT_MATTER = """You are a book production specialist. Create professional front matter for this book:
+
+Book Details:
+- Title: {title}
+- Author: {author}
+- Genre: {genre}
+- Logline: {logline}
+
+Create:
+
+1. **Title Page**: Formatted title and author name
+2. **Copyright Page**: Copyright notice, ISBN placeholder, publication info
+3. **Dedication** (optional): A brief, meaningful dedication
+4. **Epigraph** (optional): A relevant quote that sets the tone
+5. **Table of Contents**: Chapter titles and page numbers
+
+Format each section professionally and appropriately for the genre.
+Keep it concise and industry-standard."""
+
+    # ============================================================================
+    # BACK MATTER AGENT
+    # ============================================================================
+    
+    BACK_MATTER = """You are a book marketing specialist. Create compelling back matter for this book:
+
+Book Details:
+- Title: {title}
+- Author: {author}
+- Genre: {genre}
+- Theme: {theme}
+
+Create:
+
+1. **Author Bio**: Engaging 100-150 word biography
+2. **Acknowledgments**: Template for thanking contributors
+3. **About the Book**: 200-word description for marketing
+4. **Discussion Questions**: 5-7 questions for book clubs
+5. **Preview**: Teaser for the next book (if series)
+
+Make it professional, engaging, and appropriate for the genre."""
+
+    # ============================================================================
+    # QA AGENT
+    # ============================================================================
+    
+    QUALITY_ASSURANCE = """You are a quality assurance specialist. Perform a final quality check:
+
+Manuscript:
+{manuscript_summary}
+
+Verify:
+
+1. **Completeness**: All chapters present and in order
+2. **Consistency**: Story Bible adherence throughout
+3. **Quality**: Professional writing standard maintained
+4. **Formatting**: Proper structure and layout
+5. **Errors**: No remaining typos or mistakes
+6. **Readability**: Flows well from start to finish
+
+Provide:
+- Overall quality score (1-10)
+- Strengths of the manuscript
+- Any remaining issues (if any)
+- Recommendation: Ready to publish / Needs revision
+
+Be thorough and objective."""
+
+    @staticmethod
+    def format_prompt(template: str, **kwargs) -> str:
+        """
+        Format a prompt template with provided variables.
         
-    Returns:
-        Formatted prompt
-    """
-    return f"""You are a continuity checker. Verify consistency with established story elements.
-
-**Check Type:** {check_type}
-
-**Established Story Elements:**
-{story_bible_summary}
-
-**Text to Check:**
-{current_text}
-
-Identify any continuity errors or inconsistencies:
-1. Character inconsistencies (behavior, appearance, abilities)
-2. Plot contradictions (timeline, events, cause-effect)
-3. World rule violations (magic, technology, geography)
-4. Factual errors (names, dates, locations)
-
-Format as JSON:
-{{
-  "errors_found": [
-    {{
-      "type": "character|plot|world|factual",
-      "description": "...",
-      "location": "...",
-      "severity": "minor|moderate|major",
-      "suggestion": "..."
-    }}
-  ],
-  "overall_consistency": "excellent|good|needs_work|poor"
-}}
-
-If no errors found, return empty errors_found array."""
-
-
-def build_qa_prompt(
-    manuscript_section: str,
-    qa_checklist: list,
-    quality_standards: str
-) -> str:
-    """
-    Build prompt for QA Agent.
-    
-    Args:
-        manuscript_section: Section to review
-        qa_checklist: List of items to check
-        quality_standards: Quality criteria
-        
-    Returns:
-        Formatted prompt
-    """
-    checklist_str = "\n".join([f"- {item}" for item in qa_checklist])
-    
-    return f"""You are a quality assurance specialist for fiction manuscripts.
-
-**Quality Standards:**
-{quality_standards}
-
-**QA Checklist:**
-{checklist_str}
-
-**Manuscript Section:**
-{manuscript_section}
-
-Perform a comprehensive quality check and provide:
-
-1. **Checklist Results**: Pass/Fail for each item
-2. **Quality Score**: Overall rating (1-10)
-3. **Issues Found**: Specific problems
-4. **Recommendations**: How to improve
-
-Format as JSON:
-{{
-  "checklist_results": {{
-    "item_name": {{"status": "pass|fail", "notes": "..."}},
-    ...
-  }},
-  "quality_score": 8,
-  "issues": ["...", "..."],
-  "recommendations": ["...", "..."],
-  "ready_for_publication": true|false
-}}"""
+        Args:
+            template: Prompt template string
+            **kwargs: Variables to fill in the template
+            
+        Returns:
+            Formatted prompt
+        """
+        return template.format(**kwargs)

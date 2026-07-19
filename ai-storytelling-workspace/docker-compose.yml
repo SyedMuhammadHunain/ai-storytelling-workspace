@@ -109,7 +109,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: uvicorn src.storytelling_workspace.api.main:app --host 0.0.0.0 --port 8000 --reload
+    command: python -m uvicorn storytelling_workspace.api.main:app --host 0.0.0.0 --port 8000 --reload
 
 volumes:
   mysql_data:

@@ -38,6 +38,7 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 # Copy application code
 COPY src/ /app/src/
 COPY setup.py /app/
+COPY README.md /app/
 
 # Install the package in development mode
 RUN pip install -e .
@@ -61,4 +62,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # Default command (can be overridden in docker-compose.yml)
-CMD ["uvicorn", "src.storytelling_workspace.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "-m", "uvicorn", "storytelling_workspace.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

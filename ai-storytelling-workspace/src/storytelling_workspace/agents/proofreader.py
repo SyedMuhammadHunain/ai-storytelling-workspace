@@ -1,21 +1,29 @@
 """Proofreader Agent - Final surface-level check."""
 
+import asyncio
 from typing import Dict, Any, List
 
-from .base import MockAgent
+from .base import AIAgent
 from ..story_bible import StoryBible
+from ..utils.prompts import PromptTemplates
 
 
-class ProofreaderAgent(MockAgent):
+class ProofreaderAgent(AIAgent):
     """
-    Proofreader Agent performs final surface-level checks.
+    Proofreader Agent performs final surface-level checks using AI.
     
     Focuses on typos, spacing, formatting, and final polish.
     """
     
-    def __init__(self):
+    def __init__(self, ai_provider=None):
         """Initialize the Proofreader Agent."""
-        super().__init__(name="Proofreader Agent")
+        super().__init__(
+            name="Proofreader Agent",
+            ai_provider=ai_provider,
+            default_model="mistral-large-latest",
+            default_temperature=0.1,  # Lowest temperature for precise proofreading
+            default_max_tokens=2000
+        )
         
     def execute(self, bible: StoryBible) -> Dict[str, Any]:
         """
@@ -29,8 +37,8 @@ class ProofreaderAgent(MockAgent):
         """
         self.log_start()
         
-        # Perform mock proofreading
-        issues = self._find_proofreading_issues(bible)
+        # Perform AI-powered proofreading
+        issues = asyncio.run(self._perform_proofreading(bible))
         
         # Store report in metadata
         if "proofread_reports" not in bible.metadata:
@@ -39,8 +47,8 @@ class ProofreaderAgent(MockAgent):
         report = {
             "timestamp": self._get_timestamp(),
             "issues": issues,
-            "total_issues": len(issues),
-            "status": "clean" if len(issues) == 0 else "minor_issues"
+            "total_issues": sum(len(i.get('errors', [])) for i in issues),
+            "status": "clean" if not issues else "minor_issues"
         }
         
         bible.metadata["proofread_reports"].append(report)
@@ -50,12 +58,12 @@ class ProofreaderAgent(MockAgent):
             bible,
             changes={
                 "proofread": True,
-                "issues": len(issues)
+                "chapters_reviewed": len(issues)
             },
-            summary=f"Proofreading complete: {len(issues)} issues found"
+            summary=f"Proofreading complete: {len(issues)} chapters reviewed"
         )
         
-        self.log_action(f"Proofreading: {len(issues)} issues found")
+        self.log_action(f"Proofreading: {len(issues)} chapters reviewed")
         self.log_end(success=True)
         
         return {
@@ -63,39 +71,109 @@ class ProofreaderAgent(MockAgent):
             "issues": issues,
             "report": report
         }
-        
-    def _find_proofreading_issues(self, bible: StoryBible) -> List[Dict[str, Any]]:
+    
+    async def _perform_proofreading(self, bible: StoryBible) -> List[Dict[str, Any]]:
         """
-        Find mock proofreading issues.
+        Perform proofreading using AI.
         
         Args:
-            bible: Story Bible to proofread
+            bible: Story Bible with chapters
             
         Returns:
-            List of proofreading issues
+            List of issue reports per chapter
         """
         issues = []
         
-        if len(bible.chapters) > 0:
-            # Mock issue 1: Typo
-            issues.append({
-                "type": "typo",
-                "chapter": 3,
-                "description": "Possible typo: 'recieve' should be 'receive'",
-                "severity": "minor"
-            })
+        # Review chapters with content
+        for chapter in bible.chapters:
+            if not chapter.content or len(chapter.content) < 100:
+                continue
             
-            # Mock issue 2: Spacing
-            if len(bible.chapters) > 5:
+            # Take sample text from chapter (first 1500 chars)
+            sample_text = chapter.content[:1500]
+            
+            # Format prompt
+            prompt = PromptTemplates.format_prompt(
+                PromptTemplates.PROOFREAD,
+                text=sample_text
+            )
+            
+            # Generate proofreading with AI
+            response = await self.generate_text(
+                prompt=prompt,
+                temperature=0.1,
+                max_tokens=1500
+            )
+            
+            # Parse issues
+            chapter_issues = self._parse_proofreading_issues(response.content)
+            
+            if chapter_issues:
                 issues.append({
-                    "type": "spacing",
-                    "chapter": 7,
-                    "description": "Extra space before punctuation",
-                    "severity": "minor"
+                    "chapter": chapter.number,
+                    "title": chapter.title,
+                    "errors": chapter_issues
                 })
+            
+            # Limit to first 5 chapters for efficiency
+            if len(issues) >= 5:
+                break
         
         return issues
+    
+    def _parse_proofreading_issues(self, ai_response: str) -> List[Dict[str, str]]:
+        """
+        Parse AI response into proofreading issues.
         
+        Args:
+            ai_response: Raw AI response
+            
+        Returns:
+            List of issue dictionaries
+        """
+        issues = []
+        
+        # Check if AI says text is clean
+        if 'no errors' in ai_response.lower() or 'clean' in ai_response.lower() or 'ready' in ai_response.lower():
+            return []
+        
+        lines = ai_response.strip().split('\n')
+        current_issue = {}
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            
+            # Detect issue items
+            if line.startswith(('-', '•', '*', '1.', '2.', '3.')):
+                # Save previous issue
+                if current_issue and 'description' in current_issue:
+                    issues.append(current_issue)
+                
+                # Start new issue
+                issue_text = line.lstrip('-•*123456789. ')
+                current_issue = {
+                    'type': 'typo',
+                    'description': issue_text,
+                    'severity': 'minor'
+                }
+            elif 'location:' in line.lower():
+                if current_issue:
+                    current_issue['location'] = line.split(':', 1)[1].strip()
+            elif 'current:' in line.lower() or 'error:' in line.lower():
+                if current_issue:
+                    current_issue['current'] = line.split(':', 1)[1].strip()
+            elif 'corrected:' in line.lower() or 'fix:' in line.lower():
+                if current_issue:
+                    current_issue['corrected'] = line.split(':', 1)[1].strip()
+        
+        # Save last issue
+        if current_issue and 'description' in current_issue:
+            issues.append(current_issue)
+        
+        return issues
+    
     def _get_timestamp(self) -> str:
         """Get current timestamp."""
         from datetime import datetime
