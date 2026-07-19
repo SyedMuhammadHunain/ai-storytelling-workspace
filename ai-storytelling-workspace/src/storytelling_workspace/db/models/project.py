@@ -1,101 +1,117 @@
-"""Project model - root entity for storytelling projects."""
-from sqlalchemy import Enum, Integer, String, Text
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+"""
+Project model for storing project metadata and configuration.
+"""
 
-from storytelling_workspace.db.base import Base, SoftDeleteMixin, TimestampMixin, UUIDMixin
+from datetime import datetime
+from enum import Enum
+
+from sqlalchemy import Column, DateTime, Enum as SQLEnum, Integer, String, Text
+from sqlalchemy.orm import relationship
+
+from storytelling_workspace.db.base import Base
 
 
-class Project(Base, UUIDMixin, TimestampMixin, SoftDeleteMixin):
+class ProjectStatus(str, Enum):
+    """Project status enumeration."""
+
+    DRAFT = "draft"
+    IN_PROGRESS = "in_progress"
+    PAUSED = "paused"
+    COMPLETED = "completed"
+    ARCHIVED = "archived"
+
+
+class Project(Base):
     """
-    Project model representing a book/novel project.
+    Project model representing a book writing project.
     
-    A project is the root entity that contains:
-    - Story Bibles (versioned)
-    - Checkpoints (for user review)
-    - Images (cover art, portraits, scenes)
-    - Workflow states (for pause/resume)
-    - API costs (for billing)
+    Attributes:
+        id: UUID primary key
+        name: Project name
+        description: Project description
+        genre: Book genre
+        target_length: Target word count (default 80,000)
+        status: Current project status
+        created_at: Creation timestamp
+        updated_at: Last update timestamp
+        deleted_at: Soft delete timestamp
+    
+    Relationships:
+        story_bibles: One-to-many with StoryBible (versioned)
+        checkpoints: One-to-many with Checkpoint
+        images: One-to-many with Image
+        workflow_states: One-to-many with WorkflowState
+        api_costs: One-to-many with APICost
     """
-    
+
     __tablename__ = "projects"
-    
-    # Basic Information
-    name: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False,
-        comment="Project name"
-    )
-    
-    description: Mapped[str | None] = mapped_column(
-        Text,
-        nullable=True,
-        comment="Project description"
-    )
-    
-    genre: Mapped[str | None] = mapped_column(
-        String(100),
-        nullable=True,
-        comment="Book genre (e.g., Fantasy, Sci-Fi)"
-    )
-    
-    target_length: Mapped[int] = mapped_column(
-        Integer,
-        default=80000,
-        nullable=False,
-        comment="Target word count"
-    )
+
+    # Core fields
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    genre = Column(String(100), nullable=True)
+    target_length = Column(Integer, default=80000, nullable=False)
     
     # Status
-    status: Mapped[str] = mapped_column(
-        Enum(
-            "draft",
-            "in_progress",
-            "paused",
-            "completed",
-            "archived",
-            name="project_status"
-        ),
-        default="draft",
+    status = Column(
+        SQLEnum(ProjectStatus),
+        default=ProjectStatus.DRAFT,
         nullable=False,
-        comment="Project status"
+        index=True,
     )
     
+    # Soft delete
+    deleted_at = Column(DateTime, nullable=True, index=True)
+    
     # Relationships
-    story_bibles: Mapped[list["StoryBible"]] = relationship(
+    story_bibles = relationship(
         "StoryBible",
         back_populates="project",
         cascade="all, delete-orphan",
-        lazy="selectin"
+        lazy="selectin",
     )
     
-    checkpoints: Mapped[list["Checkpoint"]] = relationship(
+    checkpoints = relationship(
         "Checkpoint",
         back_populates="project",
         cascade="all, delete-orphan",
-        lazy="selectin"
+        lazy="selectin",
     )
     
-    images: Mapped[list["Image"]] = relationship(
+    images = relationship(
         "Image",
         back_populates="project",
         cascade="all, delete-orphan",
-        lazy="selectin"
+        lazy="selectin",
     )
     
-    workflow_states: Mapped[list["WorkflowState"]] = relationship(
+    workflow_states = relationship(
         "WorkflowState",
         back_populates="project",
         cascade="all, delete-orphan",
-        lazy="selectin"
+        lazy="selectin",
     )
     
-    api_costs: Mapped[list["APICost"]] = relationship(
+    api_costs = relationship(
         "APICost",
         back_populates="project",
         cascade="all, delete-orphan",
-        lazy="selectin"
+        lazy="selectin",
     )
     
     def __repr__(self) -> str:
         """String representation."""
         return f"<Project(id={self.id}, name={self.name}, status={self.status})>"
+    
+    @property
+    def is_deleted(self) -> bool:
+        """Check if project is soft deleted."""
+        return self.deleted_at is not None
+    
+    def soft_delete(self) -> None:
+        """Soft delete the project."""
+        self.deleted_at = datetime.utcnow()
+    
+    def restore(self) -> None:
+        """Restore a soft deleted project."""
+        self.deleted_at = None

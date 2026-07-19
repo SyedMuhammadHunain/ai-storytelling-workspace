@@ -1,115 +1,109 @@
-"""Chapter model - individual chapter content and metadata."""
-from sqlalchemy import Enum, ForeignKey, Integer, String, Text
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+"""
+Chapter model for storing individual chapter data.
+"""
 
-from storytelling_workspace.db.base import Base, TimestampMixin, UUIDMixin
+from enum import Enum
+
+from sqlalchemy import Column, Enum as SQLEnum, ForeignKey, Integer, String, Text
+from sqlalchemy.orm import relationship
+
+from storytelling_workspace.db.base import Base
 
 
-class Chapter(Base, UUIDMixin, TimestampMixin):
+class ChapterStatus(str, Enum):
+    """Chapter status enumeration."""
+
+    PLANNED = "planned"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    REVISED = "revised"
+
+
+class Chapter(Base):
     """
-    Chapter model representing individual chapter data.
+    Chapter model for individual book chapters.
     
-    Stores chapter content, metadata, and story structure elements.
+    Attributes:
+        id: UUID primary key
+        story_bible_id: Foreign key to StoryBible
+        chapter_number: Chapter number (1-based)
+        title: Chapter title
+        content: Chapter content (LONGTEXT)
+        summary: Chapter summary
+        pov: Point of view character
+        word_count: Actual word count
+        target_word_count: Target word count
+        status: Current chapter status
+        goal: Chapter goal
+        conflict: Chapter conflict
+        resolution: Chapter resolution
+        created_at: Creation timestamp
+        updated_at: Last update timestamp
+    
+    Relationships:
+        story_bible: Many-to-one with StoryBible
     """
-    
+
     __tablename__ = "chapters"
-    
-    # Foreign Keys
-    story_bible_id: Mapped[str] = mapped_column(
+
+    # Foreign keys
+    story_bible_id = Column(
         String(36),
         ForeignKey("story_bibles.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
-        comment="Story Bible ID"
     )
     
-    # Chapter Information
-    chapter_number: Mapped[int] = mapped_column(
-        Integer,
-        nullable=False,
-        index=True,
-        comment="Chapter number (1-based)"
-    )
+    # Chapter metadata
+    chapter_number = Column(Integer, nullable=False, index=True)
+    title = Column(String(255), nullable=False)
     
-    title: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False,
-        comment="Chapter title"
-    )
-    
-    # Chapter Content
-    content: Mapped[str | None] = mapped_column(
-        Text,
-        nullable=True,
-        comment="Full chapter text"
-    )
-    
-    summary: Mapped[str | None] = mapped_column(
-        Text,
-        nullable=True,
-        comment="Chapter summary"
-    )
-    
-    pov: Mapped[str | None] = mapped_column(
-        String(255),
-        nullable=True,
-        comment="Point of view character"
-    )
+    # Chapter content
+    content = Column(Text, nullable=True)  # LONGTEXT in MySQL
+    summary = Column(Text, nullable=True)
+    pov = Column(String(255), nullable=True)
     
     # Metadata
-    word_count: Mapped[int] = mapped_column(
-        Integer,
-        default=0,
-        nullable=False,
-        comment="Actual word count"
-    )
+    word_count = Column(Integer, default=0, nullable=False)
+    target_word_count = Column(Integer, default=3000, nullable=False)
     
-    target_word_count: Mapped[int] = mapped_column(
-        Integer,
-        default=3000,
-        nullable=False,
-        comment="Target word count"
-    )
-    
-    status: Mapped[str] = mapped_column(
-        Enum(
-            "planned",
-            "in_progress",
-            "completed",
-            "revised",
-            name="chapter_status"
-        ),
-        default="planned",
+    status = Column(
+        SQLEnum(ChapterStatus),
+        default=ChapterStatus.PLANNED,
         nullable=False,
         index=True,
-        comment="Chapter status"
     )
     
-    # Story Structure
-    goal: Mapped[str | None] = mapped_column(
-        Text,
-        nullable=True,
-        comment="Chapter goal"
-    )
-    
-    conflict: Mapped[str | None] = mapped_column(
-        Text,
-        nullable=True,
-        comment="Main conflict"
-    )
-    
-    resolution: Mapped[str | None] = mapped_column(
-        Text,
-        nullable=True,
-        comment="Conflict resolution"
-    )
+    # Story structure
+    goal = Column(Text, nullable=True)
+    conflict = Column(Text, nullable=True)
+    resolution = Column(Text, nullable=True)
     
     # Relationships
-    story_bible: Mapped["StoryBible"] = relationship(
-        "StoryBible",
-        back_populates="chapters"
-    )
+    story_bible = relationship("StoryBible", back_populates="chapters")
     
     def __repr__(self) -> str:
         """String representation."""
-        return f"<Chapter(id={self.id}, number={self.chapter_number}, title={self.title})>"
+        return (
+            f"<Chapter(id={self.id}, number={self.chapter_number}, "
+            f"title={self.title}, status={self.status})>"
+        )
+    
+    def update_word_count(self) -> None:
+        """Update word count from content."""
+        if self.content:
+            self.word_count = len(self.content.split())
+        else:
+            self.word_count = 0
+    
+    @property
+    def is_completed(self) -> bool:
+        """Check if chapter is completed."""
+        return self.status == ChapterStatus.COMPLETED
+    
+    @property
+    def progress_percentage(self) -> float:
+        """Calculate progress as percentage of target word count."""
+        if self.target_word_count > 0:
+            return min(100.0, (self.word_count / self.target_word_count) * 100)
+        return 0.0

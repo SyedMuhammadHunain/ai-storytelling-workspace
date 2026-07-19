@@ -1,67 +1,66 @@
-"""SQLAlchemy declarative base and common model utilities."""
-from datetime import datetime, timezone
+"""
+Database base configuration and declarative base.
+
+This module provides the SQLAlchemy declarative base and common
+base model functionality for all database models.
+"""
+
+from datetime import datetime
 from typing import Any
 from uuid import uuid4
 
-from sqlalchemy import DateTime, String
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy import Column, DateTime, String
+from sqlalchemy.ext.declarative import declarative_base, declared_attr
+from sqlalchemy.orm import DeclarativeMeta
 
 
-class Base(DeclarativeBase):
-    """Base class for all database models."""
-    
-    pass
+class CustomBase:
+    """Base class for all database models with common functionality."""
 
+    @declared_attr
+    def __tablename__(cls) -> str:
+        """Generate table name from class name (lowercase)."""
+        return cls.__name__.lower()
 
-class TimestampMixin:
-    """Mixin for created_at and updated_at timestamps."""
-    
-    created_at: Mapped[datetime] = mapped_column(
+    # Primary key (UUID)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(
         DateTime,
-        default=lambda: datetime.now(timezone.utc),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
         nullable=False,
-        comment="Record creation timestamp"
-    )
-    
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
-        nullable=False,
-        comment="Record last update timestamp"
     )
 
+    def to_dict(self) -> dict[str, Any]:
+        """Convert model instance to dictionary."""
+        return {
+            column.name: getattr(self, column.name)
+            for column in self.__table__.columns
+        }
 
-class UUIDMixin:
-    """Mixin for UUID primary key."""
-    
-    id: Mapped[str] = mapped_column(
-        String(36),
-        primary_key=True,
-        default=lambda: str(uuid4()),
-        comment="UUID primary key"
+    def __repr__(self) -> str:
+        """String representation of model."""
+        return f"<{self.__class__.__name__}(id={self.id})>"
+
+
+# Create declarative base with custom base class
+Base: DeclarativeMeta = declarative_base(cls=CustomBase)
+
+
+# Import all models here to ensure they're registered with Base
+# This is used by Alembic for auto-generating migrations
+def import_models() -> None:
+    """Import all models to register them with SQLAlchemy Base."""
+    from storytelling_workspace.db.models import (  # noqa: F401
+        agent_delta,
+        api_cost,
+        chapter,
+        checkpoint,
+        image,
+        project,
+        story_bible,
+        workflow_state,
     )
-
-
-class SoftDeleteMixin:
-    """Mixin for soft delete functionality."""
-    
-    deleted_at: Mapped[datetime | None] = mapped_column(
-        DateTime,
-        nullable=True,
-        default=None,
-        comment="Soft delete timestamp"
-    )
-    
-    @property
-    def is_deleted(self) -> bool:
-        """Check if record is soft deleted."""
-        return self.deleted_at is not None
-    
-    def soft_delete(self) -> None:
-        """Mark record as deleted."""
-        self.deleted_at = datetime.now(timezone.utc)
-    
-    def restore(self) -> None:
-        """Restore soft deleted record."""
-        self.deleted_at = None

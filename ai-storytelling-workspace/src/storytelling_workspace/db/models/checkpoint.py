@@ -1,121 +1,159 @@
-"""Checkpoint model - workflow checkpoints for user review."""
-from sqlalchemy import Enum, ForeignKey, JSON, String, Text, DateTime
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+"""
+Checkpoint model for workflow checkpoints and user review.
+"""
 
-from storytelling_workspace.db.base import Base, TimestampMixin, UUIDMixin
+from datetime import datetime
+from enum import Enum
+
+from sqlalchemy import Column, DateTime, Enum as SQLEnum, ForeignKey, String, Text
+from sqlalchemy.dialects.mysql import JSON
+from sqlalchemy.orm import relationship
+
+from storytelling_workspace.db.base import Base
 
 
-class Checkpoint(Base, UUIDMixin, TimestampMixin):
+class CheckpointType(str, Enum):
+    """Checkpoint type enumeration."""
+
+    CONCEPT = "concept"
+    CHARACTERS = "characters"
+    OUTLINE = "outline"
+    CHAPTER = "chapter"
+    FINAL = "final"
+
+
+class CheckpointStatus(str, Enum):
+    """Checkpoint status enumeration."""
+
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    SKIPPED = "skipped"
+
+
+class Checkpoint(Base):
     """
     Checkpoint model for workflow review points.
     
-    Captures state at critical workflow points for user approval.
+    Captures Story Bible state at critical workflow points
+    for user review and approval.
+    
+    Attributes:
+        id: UUID primary key
+        project_id: Foreign key to Project
+        story_bible_id: Foreign key to StoryBible
+        checkpoint_type: Type of checkpoint
+        phase: Workflow phase name
+        agent_name: Name of agent that created checkpoint
+        status: Current checkpoint status
+        content: Content snapshot (JSON)
+        changes: Changes made since last checkpoint (JSON)
+        user_feedback: User feedback text
+        rejection_reason: Reason for rejection
+        created_at: Creation timestamp
+        reviewed_at: Review timestamp
+    
+    Relationships:
+        project: Many-to-one with Project
+        story_bible: Many-to-one with StoryBible
     """
-    
+
     __tablename__ = "checkpoints"
-    
-    # Foreign Keys
-    project_id: Mapped[str] = mapped_column(
+
+    # Foreign keys
+    project_id = Column(
         String(36),
         ForeignKey("projects.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
-        comment="Project ID"
     )
     
-    story_bible_id: Mapped[str] = mapped_column(
+    story_bible_id = Column(
         String(36),
         ForeignKey("story_bibles.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
-        comment="Story Bible ID"
     )
     
-    # Checkpoint Metadata
-    checkpoint_type: Mapped[str] = mapped_column(
-        Enum(
-            "concept",
-            "characters",
-            "outline",
-            "chapter",
-            "final",
-            name="checkpoint_type"
-        ),
+    # Checkpoint metadata
+    checkpoint_type = Column(
+        SQLEnum(CheckpointType),
         nullable=False,
         index=True,
-        comment="Type of checkpoint"
     )
     
-    phase: Mapped[str] = mapped_column(
-        String(100),
-        nullable=False,
-        comment="Workflow phase name"
-    )
+    phase = Column(String(100), nullable=False)
+    agent_name = Column(String(255), nullable=False)
     
-    agent_name: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False,
-        comment="Agent that created checkpoint"
-    )
-    
-    # Checkpoint State
-    status: Mapped[str] = mapped_column(
-        Enum(
-            "pending",
-            "approved",
-            "rejected",
-            "skipped",
-            name="checkpoint_status"
-        ),
-        default="pending",
+    # Checkpoint state
+    status = Column(
+        SQLEnum(CheckpointStatus),
+        default=CheckpointStatus.PENDING,
         nullable=False,
         index=True,
-        comment="Checkpoint status"
     )
     
-    # Content Snapshot (JSON)
-    content: Mapped[dict] = mapped_column(
-        JSON,
-        nullable=False,
-        comment="Checkpoint content snapshot"
-    )
+    # Content snapshot (JSON for flexibility)
+    content = Column(JSON, nullable=False)
+    changes = Column(JSON, nullable=True)
     
-    changes: Mapped[dict | None] = mapped_column(
-        JSON,
-        nullable=True,
-        comment="Changes made since last checkpoint"
-    )
+    # User feedback
+    user_feedback = Column(Text, nullable=True)
+    rejection_reason = Column(Text, nullable=True)
     
-    # User Feedback
-    user_feedback: Mapped[str | None] = mapped_column(
-        Text,
-        nullable=True,
-        comment="User feedback on checkpoint"
-    )
-    
-    rejection_reason: Mapped[str | None] = mapped_column(
-        Text,
-        nullable=True,
-        comment="Reason for rejection"
-    )
-    
-    reviewed_at: Mapped[DateTime | None] = mapped_column(
-        DateTime,
-        nullable=True,
-        comment="When user reviewed checkpoint"
-    )
+    # Timestamps
+    reviewed_at = Column(DateTime, nullable=True)
     
     # Relationships
-    project: Mapped["Project"] = relationship(
-        "Project",
-        back_populates="checkpoints"
-    )
-    
-    story_bible: Mapped["StoryBible"] = relationship(
-        "StoryBible",
-        back_populates="checkpoints"
-    )
+    project = relationship("Project", back_populates="checkpoints")
+    story_bible = relationship("StoryBible", back_populates="checkpoints")
     
     def __repr__(self) -> str:
         """String representation."""
-        return f"<Checkpoint(id={self.id}, type={self.checkpoint_type}, status={self.status})>"
+        return (
+            f"<Checkpoint(id={self.id}, type={self.checkpoint_type}, "
+            f"status={self.status})>"
+        )
+    
+    def approve(self, feedback: str | None = None) -> None:
+        """
+        Approve the checkpoint.
+        
+        Args:
+            feedback: Optional user feedback
+        """
+        self.status = CheckpointStatus.APPROVED
+        self.reviewed_at = datetime.utcnow()
+        if feedback:
+            self.user_feedback = feedback
+    
+    def reject(self, reason: str) -> None:
+        """
+        Reject the checkpoint.
+        
+        Args:
+            reason: Reason for rejection
+        """
+        self.status = CheckpointStatus.REJECTED
+        self.reviewed_at = datetime.utcnow()
+        self.rejection_reason = reason
+    
+    def skip(self) -> None:
+        """Skip the checkpoint."""
+        self.status = CheckpointStatus.SKIPPED
+        self.reviewed_at = datetime.utcnow()
+    
+    @property
+    def is_pending(self) -> bool:
+        """Check if checkpoint is pending review."""
+        return self.status == CheckpointStatus.PENDING
+    
+    @property
+    def is_approved(self) -> bool:
+        """Check if checkpoint is approved."""
+        return self.status == CheckpointStatus.APPROVED
+    
+    @property
+    def is_rejected(self) -> bool:
+        """Check if checkpoint is rejected."""
+        return self.status == CheckpointStatus.REJECTED
