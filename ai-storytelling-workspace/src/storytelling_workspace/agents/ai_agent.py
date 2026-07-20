@@ -197,9 +197,8 @@ class AIAgent(BaseAgent):
         return {}
     
     @classmethod
-    def get_cache_stats(cls) -> Dict[str, Any]:
+    async def get_cache_stats(cls) -> Dict[str, Any]:
         """Get cache statistics."""
         if cls._cache:
-            import asyncio
             return await cls._cache.get_stats()
         return {}
