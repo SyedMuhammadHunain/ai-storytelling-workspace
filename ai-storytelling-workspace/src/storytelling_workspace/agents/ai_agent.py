@@ -143,7 +143,7 @@ class AIAgent(BaseAgent):
         """
         pass
     
-    async def execute(self, bible: StoryBible) -> Dict[str, Any]:
+    async async def execute(self, bible: StoryBible) -> Dict[str, Any]:
         """
         Execute the AI agent.
         
@@ -201,5 +201,5 @@ class AIAgent(BaseAgent):
         """Get cache statistics."""
         if cls._cache:
             import asyncio
-            return asyncio.run(cls._cache.get_stats())
+            return await cls._cache.get_stats()
         return {}

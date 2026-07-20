@@ -25,7 +25,7 @@ class DialogueVoiceAgent(AIAgent):
             default_max_tokens=3000
         )
         
-    def execute(self, bible: StoryBible) -> Dict[str, Any]:
+    async def execute(self, bible: StoryBible) -> Dict[str, Any]:
         """
         Execute dialogue/voice enhancement.
         
@@ -38,7 +38,7 @@ class DialogueVoiceAgent(AIAgent):
         self.log_start()
         
         # Perform AI-powered dialogue enhancement
-        enhancements = asyncio.run(self._enhance_dialogue(bible))
+        enhancements = await self._enhance_dialogue(bible)
         
         # Store report in metadata
         if "voice_reports" not in bible.metadata:

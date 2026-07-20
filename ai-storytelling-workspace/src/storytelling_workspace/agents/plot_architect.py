@@ -27,7 +27,7 @@ class PlotArchitectAgent(AIAgent):
             default_max_tokens=4000
         )
         
-    def execute(self, bible: StoryBible) -> Dict[str, Any]:
+    async def execute(self, bible: StoryBible) -> Dict[str, Any]:
         """
         Execute plot architecture.
         
@@ -40,7 +40,7 @@ class PlotArchitectAgent(AIAgent):
         self.log_start()
         
         # Generate plot structure with AI
-        plot_data = asyncio.run(self._generate_plot_structure(bible))
+        plot_data = await self._generate_plot_structure(bible)
         
         # Add chapters to Story Bible
         for chapter in plot_data["chapters"]:

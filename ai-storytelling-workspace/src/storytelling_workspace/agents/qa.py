@@ -26,7 +26,7 @@ class QAAgent(AIAgent):
             default_max_tokens=2000
         )
         
-    def execute(self, bible: StoryBible) -> Dict[str, Any]:
+    async def execute(self, bible: StoryBible) -> Dict[str, Any]:
         """
         Execute QA validation.
         
@@ -42,7 +42,7 @@ class QAAgent(AIAgent):
         structural_issues = self._perform_structural_checks(bible)
         
         # Perform AI-powered quality assessment
-        quality_assessment = asyncio.run(self._perform_quality_assessment(bible))
+        quality_assessment = await self._perform_quality_assessment(bible)
         
         # Combine all issues
         all_issues = structural_issues + quality_assessment.get('issues', [])

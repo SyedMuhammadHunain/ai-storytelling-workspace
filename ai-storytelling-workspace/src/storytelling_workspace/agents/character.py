@@ -28,7 +28,7 @@ class CharacterAgent(AIAgent):
             default_max_tokens=3000
         )
         
-    def execute(self, bible: StoryBible) -> Dict[str, Any]:
+    async def execute(self, bible: StoryBible) -> Dict[str, Any]:
         """
         Execute character creation.
         
@@ -41,7 +41,7 @@ class CharacterAgent(AIAgent):
         self.log_start()
         
         # Generate characters with AI
-        characters = asyncio.run(self._generate_characters(bible))
+        characters = await self._generate_characters(bible)
         
         # Add characters to Story Bible
         for character in characters:

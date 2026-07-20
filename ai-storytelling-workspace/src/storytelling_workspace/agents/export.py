@@ -26,7 +26,7 @@ class ExportAgent(BaseAgent):
         super().__init__(name="Export Agent")
         self.output_dir = output_dir
         
-    def execute(self, bible: StoryBible) -> Dict[str, Any]:
+    async def execute(self, bible: StoryBible) -> Dict[str, Any]:
         """
         Execute export.
         

@@ -25,7 +25,7 @@ class LineEditorAgent(AIAgent):
             default_max_tokens=3000
         )
         
-    def execute(self, bible: StoryBible) -> Dict[str, Any]:
+    async def execute(self, bible: StoryBible) -> Dict[str, Any]:
         """
         Execute line editing.
         
@@ -38,7 +38,7 @@ class LineEditorAgent(AIAgent):
         self.log_start()
         
         # Perform AI-powered line editing
-        edits = asyncio.run(self._perform_line_editing(bible))
+        edits = await self._perform_line_editing(bible)
         
         # Store report in metadata
         if "line_edit_reports" not in bible.metadata:

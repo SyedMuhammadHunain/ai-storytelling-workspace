@@ -35,7 +35,7 @@ class BaseAgent(ABC):
         self.logger = logging.getLogger(f"Agent.{name}")
         
     @abstractmethod
-    def execute(self, bible: StoryBible) -> Dict[str, Any]:
+    async def execute(self, bible: StoryBible) -> Dict[str, Any]:
         """
         Execute the agent's task.
         
@@ -213,7 +213,7 @@ class MockAgent(BaseAgent):
         super().__init__(name)
         self.mock_output = mock_output or f"Mock output from {name}"
         
-    def execute(self, bible: StoryBible) -> Dict[str, Any]:
+    async def execute(self, bible: StoryBible) -> Dict[str, Any]:
         """
         Execute the mock agent.
         

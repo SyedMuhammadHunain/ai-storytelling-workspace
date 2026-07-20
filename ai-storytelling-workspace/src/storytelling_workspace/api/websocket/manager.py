@@ -252,7 +252,9 @@ class ConnectionManager:
     async def start_redis_listener(self):
         """Start listening to Redis pub/sub channel for workflow updates."""
         try:
-            self.redis_client = aioredis.from_url(settings.redis_url)
+            # Construct Redis URL from settings
+            redis_url = f"redis://:{settings.REDIS_PASSWORD}@{settings.REDIS_HOST}:{settings.REDIS_PORT}/{settings.REDIS_DB}" if settings.REDIS_PASSWORD else f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}/{settings.REDIS_DB}"
+            self.redis_client = aioredis.from_url(redis_url)
             self.pubsub = self.redis_client.pubsub()
             await self.pubsub.subscribe("workflow_updates")
             

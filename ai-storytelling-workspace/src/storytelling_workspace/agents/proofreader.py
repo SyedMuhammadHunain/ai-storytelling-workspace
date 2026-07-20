@@ -25,7 +25,7 @@ class ProofreaderAgent(AIAgent):
             default_max_tokens=2000
         )
         
-    def execute(self, bible: StoryBible) -> Dict[str, Any]:
+    async def execute(self, bible: StoryBible) -> Dict[str, Any]:
         """
         Execute proofreading.
         
@@ -38,7 +38,7 @@ class ProofreaderAgent(AIAgent):
         self.log_start()
         
         # Perform AI-powered proofreading
-        issues = asyncio.run(self._perform_proofreading(bible))
+        issues = await self._perform_proofreading(bible)
         
         # Store report in metadata
         if "proofread_reports" not in bible.metadata:

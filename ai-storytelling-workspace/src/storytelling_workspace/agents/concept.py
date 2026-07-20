@@ -26,7 +26,7 @@ class ConceptAgent(AIAgent):
             default_max_tokens=1500
         )
         
-    def execute(self, bible: StoryBible) -> Dict[str, Any]:
+    async def execute(self, bible: StoryBible) -> Dict[str, Any]:
         """
         Execute concept development.
         
@@ -39,7 +39,7 @@ class ConceptAgent(AIAgent):
         self.log_start()
         
         # Run async generation in sync context
-        concept = asyncio.run(self._generate_concept(bible))
+        concept = await self._generate_concept(bible)
         
         # Update Story Bible
         bible.concept = concept

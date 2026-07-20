@@ -25,7 +25,7 @@ class CopyEditorAgent(AIAgent):
             default_max_tokens=2500
         )
         
-    def execute(self, bible: StoryBible) -> Dict[str, Any]:
+    async def execute(self, bible: StoryBible) -> Dict[str, Any]:
         """
         Execute copy editing.
         
@@ -38,7 +38,7 @@ class CopyEditorAgent(AIAgent):
         self.log_start()
         
         # Perform AI-powered copy editing
-        corrections = asyncio.run(self._perform_copy_editing(bible))
+        corrections = await self._perform_copy_editing(bible)
         
         # Store report in metadata
         if "copy_edit_reports" not in bible.metadata:

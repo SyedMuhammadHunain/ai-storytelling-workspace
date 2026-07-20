@@ -285,7 +285,8 @@ def workflow_complete(phase_result, project_id: str, workflow_id: str):
             await redis.publish("workflow_updates", payload)
             await redis.aclose()
 
-        asyncio.run(_complete())
+        from storytelling_workspace.workers.celery_app import run_async
+        run_async(_complete())
         
         return {
             "status": "completed",
@@ -352,7 +353,8 @@ def update_workflow_progress(
                 await redis.publish("workflow_updates", payload)
                 await redis.aclose()
 
-        asyncio.run(_update())
+        from storytelling_workspace.workers.celery_app import run_async
+        run_async(_update())
         
     except Exception as e:
         logger.error(f"Failed to update workflow progress: {e}", exc_info=True)
@@ -406,7 +408,8 @@ def mark_workflow_failed(workflow_id: str, error_message: str):
                 await redis.publish("workflow_updates", status_payload)
                 await redis.aclose()
 
-        asyncio.run(_fail())
+        from storytelling_workspace.workers.celery_app import run_async
+        run_async(_fail())
         
     except Exception as e:
         logger.error(f"Failed to mark workflow as failed: {e}", exc_info=True)

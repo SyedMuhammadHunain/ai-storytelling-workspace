@@ -18,10 +18,20 @@ export class WebSocketService {
   public messages$ = this.messagesSubject.asObservable();
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
+  private intentionallyDisconnected = false;
 
   connect(projectId: string): void {
+    this.intentionallyDisconnected = false;
+    
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       return;
+    }
+
+    // Clean up existing socket before creating a new one
+    if (this.socket) {
+      this.socket.onclose = null; // Prevent reconnect loop
+      this.socket.close();
+      this.socket = null;
     }
 
     const wsUrl = `${environment.wsUrl}/ws/${projectId}`;
@@ -49,18 +59,24 @@ export class WebSocketService {
 
     this.socket.onclose = () => {
       console.log('WebSocket disconnected');
-      this.attemptReconnect(projectId);
+      if (!this.intentionallyDisconnected) {
+        this.attemptReconnect(projectId);
+      }
     };
   }
 
   private attemptReconnect(projectId: string): void {
+    if (this.intentionallyDisconnected) return;
+    
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
       const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
       console.log(`Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
       
       setTimeout(() => {
-        this.connect(projectId);
+        if (!this.intentionallyDisconnected) {
+          this.connect(projectId);
+        }
       }, delay);
     } else {
       console.error('Max reconnection attempts reached');
@@ -76,7 +92,9 @@ export class WebSocketService {
   }
 
   disconnect(): void {
+    this.intentionallyDisconnected = true;
     if (this.socket) {
+      this.socket.onclose = null; // Ensure no onclose handlers fire
       this.socket.close();
       this.socket = null;
     }

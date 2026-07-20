@@ -27,7 +27,7 @@ class WorldbuildingAgent(AIAgent):
             default_max_tokens=2500
         )
         
-    def execute(self, bible: StoryBible) -> Dict[str, Any]:
+    async def execute(self, bible: StoryBible) -> Dict[str, Any]:
         """
         Execute worldbuilding.
         
@@ -40,7 +40,7 @@ class WorldbuildingAgent(AIAgent):
         self.log_start()
         
         # Generate world with AI
-        world_data = asyncio.run(self._generate_world(bible))
+        world_data = await self._generate_world(bible)
         
         # Update Story Bible
         bible.world_rules = world_data["world_rules"]

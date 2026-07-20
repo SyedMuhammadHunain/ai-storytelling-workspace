@@ -125,8 +125,8 @@ class AgentTask(BaseTask):
             else:
                 raise ValueError(f"Unknown agent: {agent_name}")
                 
-            # Execute synchronously in a thread to not block the event loop
-            result = await asyncio.to_thread(agent.execute, domain_bible)
+            # Execute asynchronously since agents are now async
+            result = await agent.execute(domain_bible)
             
             await save_bible(domain_bible)
             
@@ -138,7 +138,8 @@ class AgentTask(BaseTask):
             }
 
         try:
-            return asyncio.run(run_all())
+            from storytelling_workspace.workers.celery_app import run_async
+            return run_async(run_all())
         except Exception as e:
             logger.error(f"Agent {agent_name} failed: {e}", exc_info=True)
             raise

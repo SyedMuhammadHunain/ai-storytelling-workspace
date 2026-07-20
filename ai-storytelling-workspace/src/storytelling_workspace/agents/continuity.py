@@ -26,7 +26,7 @@ class ContinuityAgent(AIAgent):
             default_max_tokens=2000
         )
         
-    def execute(self, bible: StoryBible) -> Dict[str, Any]:
+    async def execute(self, bible: StoryBible) -> Dict[str, Any]:
         """
         Execute continuity check.
         
@@ -39,7 +39,7 @@ class ContinuityAgent(AIAgent):
         self.log_start()
         
         # Perform AI-powered continuity check
-        issues = asyncio.run(self._check_continuity_with_ai(bible))
+        issues = await self._check_continuity_with_ai(bible)
         
         # Store continuity report in metadata
         if "continuity_reports" not in bible.metadata:

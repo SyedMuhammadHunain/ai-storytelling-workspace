@@ -18,7 +18,7 @@ class CompilationAgent(BaseAgent):
         """Initialize the Compilation Agent."""
         super().__init__(name="Compilation Agent")
         
-    def execute(self, bible: StoryBible) -> Dict[str, Any]:
+    async def execute(self, bible: StoryBible) -> Dict[str, Any]:
         """
         Execute manuscript compilation.
         

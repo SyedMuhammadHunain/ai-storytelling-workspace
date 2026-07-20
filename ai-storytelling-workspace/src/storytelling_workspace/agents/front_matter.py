@@ -25,7 +25,7 @@ class FrontMatterAgent(AIAgent):
             default_max_tokens=1500
         )
         
-    def execute(self, bible: StoryBible) -> Dict[str, Any]:
+    async def execute(self, bible: StoryBible) -> Dict[str, Any]:
         """
         Execute front matter generation.
         
@@ -38,7 +38,7 @@ class FrontMatterAgent(AIAgent):
         self.log_start()
         
         # Generate front matter sections with AI
-        front_matter = asyncio.run(self._generate_front_matter(bible))
+        front_matter = await self._generate_front_matter(bible)
         
         # Store in metadata
         bible.metadata["front_matter"] = front_matter

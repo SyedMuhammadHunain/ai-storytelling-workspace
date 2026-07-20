@@ -26,7 +26,7 @@ class IntakeAgent(AIAgent):
             default_max_tokens=1000
         )
         
-    def execute(self, bible: StoryBible) -> Dict[str, Any]:
+    async def execute(self, bible: StoryBible) -> Dict[str, Any]:
         """
         Execute intake - capture and refine book parameters.
         
@@ -43,7 +43,7 @@ class IntakeAgent(AIAgent):
         initial_brief = self._get_initial_input()
         
         # Use AI to refine and enhance the brief
-        enhanced_brief = asyncio.run(self._enhance_brief(initial_brief))
+        enhanced_brief = await self._enhance_brief(initial_brief)
         
         # Update Story Bible
         bible.brief = enhanced_brief

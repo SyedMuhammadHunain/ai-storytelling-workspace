@@ -25,7 +25,7 @@ class BackMatterAgent(AIAgent):
             default_max_tokens=1500
         )
         
-    def execute(self, bible: StoryBible) -> Dict[str, Any]:
+    async def execute(self, bible: StoryBible) -> Dict[str, Any]:
         """
         Execute back matter generation.
         
@@ -38,7 +38,7 @@ class BackMatterAgent(AIAgent):
         self.log_start()
         
         # Generate back matter sections with AI
-        back_matter = asyncio.run(self._generate_back_matter(bible))
+        back_matter = await self._generate_back_matter(bible)
         
         # Store in metadata
         bible.metadata["back_matter"] = back_matter

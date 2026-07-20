@@ -129,7 +129,7 @@ class AIImageGeneratorAgent(AIAgent):
         
         return response
     
-    async def execute(self, bible: StoryBible) -> Dict[str, Any]:
+    async async def execute(self, bible: StoryBible) -> Dict[str, Any]:
         """
         Execute image generation for all requested assets.
         

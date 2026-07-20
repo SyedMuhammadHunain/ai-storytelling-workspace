@@ -1,7 +1,9 @@
 """Celery application configuration for async task processing."""
 
 import os
+import asyncio
 from celery import Celery
+from celery.signals import worker_process_init
 from kombu import Queue
 
 # Create Celery app
@@ -106,3 +108,27 @@ class WorkflowTask(BaseTask):
         """Handle workflow error."""
         # TODO: Implement error handling
         pass
+
+# Global event loop for worker process to avoid "Future attached to a different loop" errors
+_worker_loop = None
+
+@worker_process_init.connect
+def init_worker_loop(**kwargs):
+    """Initialize a single event loop per worker process."""
+    global _worker_loop
+    _worker_loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(_worker_loop)
+
+def run_async(coro):
+    """Run an async coroutine synchronously using the worker's global event loop."""
+    global _worker_loop
+    if _worker_loop is None:
+        # Fallback for testing/non-worker environments
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        return loop.run_until_complete(coro)
+        
+    return _worker_loop.run_until_complete(coro)

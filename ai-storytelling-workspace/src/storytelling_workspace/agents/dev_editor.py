@@ -25,7 +25,7 @@ class DevelopmentalEditorAgent(AIAgent):
             default_max_tokens=3000
         )
         
-    def execute(self, bible: StoryBible) -> Dict[str, Any]:
+    async def execute(self, bible: StoryBible) -> Dict[str, Any]:
         """
         Execute developmental edit.
         
@@ -38,7 +38,7 @@ class DevelopmentalEditorAgent(AIAgent):
         self.log_start()
         
         # Perform AI-powered developmental analysis
-        notes = asyncio.run(self._generate_developmental_notes(bible))
+        notes = await self._generate_developmental_notes(bible)
         
         # Store report in metadata
         if "dev_edit_reports" not in bible.metadata:

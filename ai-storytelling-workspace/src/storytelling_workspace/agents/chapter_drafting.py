@@ -33,7 +33,7 @@ class ChapterDraftingAgent(AIAgent):
         )
         self.chapter_number = chapter_number
         
-    def execute(self, bible: StoryBible) -> Dict[str, Any]:
+    async def execute(self, bible: StoryBible) -> Dict[str, Any]:
         """
         Execute chapter drafting.
         
@@ -55,7 +55,7 @@ class ChapterDraftingAgent(AIAgent):
             }
         
         # Generate chapter content with AI
-        content = asyncio.run(self._generate_chapter_content(bible, chapter))
+        content = await self._generate_chapter_content(bible, chapter)
         
         # Update chapter with content
         chapter.content = content

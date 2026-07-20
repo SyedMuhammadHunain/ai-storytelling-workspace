@@ -29,7 +29,7 @@ class AICharacterAgent(AIAgent):
             max_tokens=2000
         )
     
-    async def execute(self, bible: StoryBible) -> Dict[str, Any]:
+    async async def execute(self, bible: StoryBible) -> Dict[str, Any]:
         """
         Execute character creation for all main roles.
         
