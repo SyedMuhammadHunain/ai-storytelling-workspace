@@ -118,8 +118,12 @@ class ImageGenerationRequest(BaseModel):
     image_type: Literal[
         'cover_art',
         'character_portrait',
-        'scene_illustration'
-    ] = Field(..., description="Type of image to generate")
+        'scene_illustration',
+        'cover',
+        'character',
+        'scene'
+    ] = Field(..., alias="type", description="Type of image to generate")
+    project_id: UUID = Field(..., description="Project UUID")
     prompt: str = Field(
         ...,
         min_length=10,

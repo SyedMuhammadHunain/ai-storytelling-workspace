@@ -19,11 +19,11 @@ class StoryBibleResponse(BaseModel):
     world_rules: Optional[dict[str, Any]] = Field(None, description="World building rules")
     characters: Optional[dict[str, Any]] = Field(None, description="Character information")
     locations: Optional[dict[str, Any]] = Field(None, description="Location details")
-    timeline: Optional[dict[str, Any]] = Field(None, description="Story timeline")
+    timeline: Optional[list[dict[str, Any]]] = Field(None, description="Story timeline")
     plot_threads: Optional[dict[str, Any]] = Field(None, description="Plot threads and arcs")
     terminology: Optional[dict[str, Any]] = Field(None, description="Terminology and lore")
     style_guide: Optional[dict[str, Any]] = Field(None, description="Writing style guide")
-    metadata: Optional[dict[str, Any]] = Field(None, description="Additional metadata")
+    metadata: Optional[dict[str, Any]] = Field(None, validation_alias="story_metadata", description="Additional metadata")
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")
     
