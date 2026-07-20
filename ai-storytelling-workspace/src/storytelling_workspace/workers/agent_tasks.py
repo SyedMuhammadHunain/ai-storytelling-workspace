@@ -20,35 +20,125 @@ class AgentTask(BaseTask):
     ) -> Dict[str, Any]:
         """
         Execute an agent with given context.
-        
-        Args:
-            agent_name: Name of the agent to execute
-            project_id: Project UUID
-            workflow_id: Workflow state UUID
-            context: Agent execution context
-            
-        Returns:
-            dict: Agent execution result
         """
         logger.info(f"Executing agent {agent_name} for project {project_id}")
         
-        try:
-            # TODO: Implement actual agent execution
-            # This would involve:
-            # 1. Load agent configuration
-            # 2. Prepare agent context from Story Bible
-            # 3. Execute agent (call LLM API)
-            # 4. Process agent output
-            # 5. Update Story Bible
-            # 6. Create checkpoint if needed
+        import asyncio
+        import importlib
+        from storytelling_workspace.db.session import get_session_factory
+        from storytelling_workspace.db.repositories.story_bible import StoryBibleRepository
+        from storytelling_workspace.core.ai_provider import AIProviderFactory
+        from storytelling_workspace.story_bible import StoryBible
+        
+        async def fetch_bible():
+            async with get_session_factory()() as session:
+                repo = StoryBibleRepository(session)
+                db_bible = await repo.get_latest_by_project(project_id)
+                if not db_bible:
+                    return None
+                return {
+                    "version": db_bible.version,
+                    "created_at": db_bible.created_at.isoformat() if db_bible.created_at else None,
+                    "brief": db_bible.brief or {},
+                    "concept": db_bible.concept or {},
+                    "world_rules": db_bible.world_rules or {},
+                    "characters": db_bible.characters or {},
+                    "locations": db_bible.locations or {},
+                    "timeline": db_bible.timeline or [],
+                    "plot_threads": db_bible.plot_threads or {},
+                    "terminology": db_bible.terminology or {},
+                    "style_guide": db_bible.style_guide or {},
+                    "metadata": db_bible.story_metadata or {}
+                }
+
+        async def save_bible(updated_bible):
+            async with get_session_factory()() as session:
+                repo = StoryBibleRepository(session)
+                db_bible = await repo.get_latest_by_project(project_id)
+                domain_dict = updated_bible.to_dict()
+                
+                if not db_bible:
+                    from storytelling_workspace.db.models.story_bible import StoryBible as DBStoryBible
+                    db_bible = DBStoryBible(
+                        project_id=str(project_id),
+                        brief=domain_dict.get("brief"),
+                        concept=domain_dict.get("concept"),
+                        world_rules=domain_dict.get("world_rules"),
+                        characters=domain_dict.get("characters"),
+                        locations=domain_dict.get("locations"),
+                        timeline=domain_dict.get("timeline"),
+                        plot_threads=domain_dict.get("plot_threads"),
+                        terminology=domain_dict.get("terminology"),
+                        style_guide=domain_dict.get("style_guide"),
+                        story_metadata=domain_dict.get("metadata")
+                    )
+                    session.add(db_bible)
+                else:
+                    db_bible.brief = domain_dict.get("brief")
+                    db_bible.concept = domain_dict.get("concept")
+                    db_bible.world_rules = domain_dict.get("world_rules")
+                    db_bible.characters = domain_dict.get("characters")
+                    db_bible.locations = domain_dict.get("locations")
+                    db_bible.timeline = domain_dict.get("timeline")
+                    db_bible.plot_threads = domain_dict.get("plot_threads")
+                    db_bible.terminology = domain_dict.get("terminology")
+                    db_bible.style_guide = domain_dict.get("style_guide")
+                    db_bible.story_metadata = domain_dict.get("metadata")
+                    db_bible.increment_version()
+                await session.commit()
+
+        async def run_all():
+            db_data = await fetch_bible()
+            if db_data:
+                domain_bible = StoryBible.from_dict(db_data)
+            else:
+                domain_bible = StoryBible(project_name=str(project_id))
+            
+            factory = AIProviderFactory()
+            ai_provider = factory.primary
+            agent_map = {
+                "intake": ("storytelling_workspace.agents.intake", "IntakeAgent"),
+                "concept": ("storytelling_workspace.agents.concept", "ConceptAgent"),
+                "worldbuilding": ("storytelling_workspace.agents.worldbuilding", "WorldbuildingAgent"),
+                "character": ("storytelling_workspace.agents.character", "CharacterAgent"),
+                "outline": ("storytelling_workspace.agents.plot_architect", "PlotArchitectAgent"),
+                "chapter_drafting": ("storytelling_workspace.agents.chapter_drafting", "ChapterDraftingAgent"),
+                "continuity": ("storytelling_workspace.agents.continuity", "ContinuityAgent"),
+                "developmental_editor": ("storytelling_workspace.agents.dev_editor", "DevelopmentalEditorAgent"),
+                "line_editor": ("storytelling_workspace.agents.line_editor", "LineEditorAgent"),
+                "copy_editor": ("storytelling_workspace.agents.copy_editor", "CopyEditorAgent"),
+                "proofreader": ("storytelling_workspace.agents.proofreader", "ProofreaderAgent"),
+                "sensitivity_reader": ("storytelling_workspace.agents.qa", "QAAgent"),
+                "formatter": ("storytelling_workspace.agents.compilation", "CompilationAgent"),
+                "cover_designer": ("storytelling_workspace.agents.ai_image_generator", "AIImageGeneratorAgent"),
+                "metadata_generator": ("storytelling_workspace.agents.export", "ExportAgent"),
+            }
+            
+            if agent_name in agent_map:
+                mod_name, cls_name = agent_map[agent_name]
+                module = importlib.import_module(mod_name)
+                agent_cls = getattr(module, cls_name)
+                try:
+                    agent = agent_cls(ai_provider=ai_provider)
+                except TypeError:
+                    agent = agent_cls()
+            else:
+                raise ValueError(f"Unknown agent: {agent_name}")
+                
+            # Execute synchronously in a thread to not block the event loop
+            result = await asyncio.to_thread(agent.execute, domain_bible)
+            
+            await save_bible(domain_bible)
             
             return {
                 "agent": agent_name,
                 "status": "completed",
-                "output": {},
+                "output": result,
                 "checkpoint_created": False
             }
-            
+
+        try:
+            return asyncio.run(run_all())
         except Exception as e:
             logger.error(f"Agent {agent_name} failed: {e}", exc_info=True)
             raise

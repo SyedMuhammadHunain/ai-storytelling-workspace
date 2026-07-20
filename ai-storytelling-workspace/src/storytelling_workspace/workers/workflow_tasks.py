@@ -3,9 +3,15 @@
 import logging
 from typing import Optional
 from uuid import UUID
+import asyncio
+import json
+import redis.asyncio as aioredis
 
 from celery import chain, group
 from .celery_app import celery_app, WorkflowTask
+from ..config import settings
+from ..db.session import get_session_factory
+from ..db.repositories.workflow_state import WorkflowStateRepository
 
 logger = logging.getLogger(__name__)
 
@@ -68,34 +74,26 @@ def start_workflow_task(
 
 @celery_app.task(name="workflow.phase_1")
 def execute_phase_1(project_id: str, workflow_id: str):
-    """
-    Execute Phase 1: Setup.
-    
-    Agents:
-    1. Intake Agent - Process user brief
-    2. Concept Agent - Develop story concept
-    3. Worldbuilding Agent - Create world rules
-    4. Character Agent - Design characters
-    
-    Args:
-        project_id: Project UUID
-        workflow_id: Workflow state UUID
-        
-    Returns:
-        dict: Phase execution result
-    """
+    """Execute Phase 1: Setup."""
     logger.info(f"Phase 1 (Setup) started for workflow {workflow_id}")
     
     try:
-        # TODO: Execute agents sequentially
-        # For now, just simulate progress
-        update_workflow_progress.delay(
-            workflow_id,
-            current_step=4,
-            total_steps=15,
-            phase="setup",
-            message="Phase 1 (Setup) completed"
-        )
+        from .agent_tasks import AgentTask
+        task = AgentTask()
+        
+        update_workflow_progress.delay(workflow_id, 1, 15, "setup", "Running Intake Agent...")
+        task.execute_agent("intake", project_id, workflow_id, {})
+        
+        update_workflow_progress.delay(workflow_id, 2, 15, "setup", "Running Concept Agent...")
+        task.execute_agent("concept", project_id, workflow_id, {})
+        
+        update_workflow_progress.delay(workflow_id, 3, 15, "setup", "Running Worldbuilding Agent...")
+        task.execute_agent("worldbuilding", project_id, workflow_id, {})
+        
+        update_workflow_progress.delay(workflow_id, 4, 15, "setup", "Running Character Agent...")
+        task.execute_agent("character", project_id, workflow_id, {})
+        
+        update_workflow_progress.delay(workflow_id, 4, 15, "setup", "Phase 1 (Setup) completed")
         
         return {
             "phase": 1,
@@ -130,33 +128,23 @@ def phase_1_complete(phase_result, project_id: str, workflow_id: str):
 
 @celery_app.task(name="workflow.phase_2")
 def execute_phase_2(project_id: str, workflow_id: str):
-    """
-    Execute Phase 2: Drafting.
-    
-    Agents:
-    5. Outline Agent - Create chapter outline
-    6. Chapter Drafting Agent - Draft chapters (parallel)
-    7. Continuity Agent - Check consistency
-    
-    Args:
-        project_id: Project UUID
-        workflow_id: Workflow state UUID
-        
-    Returns:
-        dict: Phase execution result
-    """
+    """Execute Phase 2: Drafting."""
     logger.info(f"Phase 2 (Drafting) started for workflow {workflow_id}")
     
     try:
-        # TODO: Execute agents
-        # Agent 6 can run in parallel for multiple chapters
-        update_workflow_progress.delay(
-            workflow_id,
-            current_step=7,
-            total_steps=15,
-            phase="drafting",
-            message="Phase 2 (Drafting) completed"
-        )
+        from .agent_tasks import AgentTask
+        task = AgentTask()
+        
+        update_workflow_progress.delay(workflow_id, 5, 15, "drafting", "Running Outline Agent...")
+        task.execute_agent("outline", project_id, workflow_id, {})
+        
+        update_workflow_progress.delay(workflow_id, 6, 15, "drafting", "Running Chapter Drafting Agent...")
+        task.execute_agent("chapter_drafting", project_id, workflow_id, {})
+        
+        update_workflow_progress.delay(workflow_id, 7, 15, "drafting", "Running Continuity Agent...")
+        task.execute_agent("continuity", project_id, workflow_id, {})
+        
+        update_workflow_progress.delay(workflow_id, 7, 15, "drafting", "Phase 2 (Drafting) completed")
         
         return {
             "phase": 2,
@@ -183,34 +171,29 @@ def phase_2_complete(phase_result, project_id: str, workflow_id: str):
 
 @celery_app.task(name="workflow.phase_3")
 def execute_phase_3(project_id: str, workflow_id: str):
-    """
-    Execute Phase 3: Editing.
-    
-    Agents:
-    8. Developmental Editor - Structural editing
-    9. Line Editor - Sentence-level editing
-    10. Copy Editor - Grammar and style
-    11. Proofreader - Final polish
-    12. Sensitivity Reader - Cultural sensitivity
-    
-    Args:
-        project_id: Project UUID
-        workflow_id: Workflow state UUID
-        
-    Returns:
-        dict: Phase execution result
-    """
+    """Execute Phase 3: Editing."""
     logger.info(f"Phase 3 (Editing) started for workflow {workflow_id}")
     
     try:
-        # TODO: Execute agents sequentially
-        update_workflow_progress.delay(
-            workflow_id,
-            current_step=12,
-            total_steps=15,
-            phase="editing",
-            message="Phase 3 (Editing) completed"
-        )
+        from .agent_tasks import AgentTask
+        task = AgentTask()
+        
+        update_workflow_progress.delay(workflow_id, 8, 15, "editing", "Running Developmental Editor...")
+        task.execute_agent("developmental_editor", project_id, workflow_id, {})
+        
+        update_workflow_progress.delay(workflow_id, 9, 15, "editing", "Running Line Editor...")
+        task.execute_agent("line_editor", project_id, workflow_id, {})
+        
+        update_workflow_progress.delay(workflow_id, 10, 15, "editing", "Running Copy Editor...")
+        task.execute_agent("copy_editor", project_id, workflow_id, {})
+        
+        update_workflow_progress.delay(workflow_id, 11, 15, "editing", "Running Proofreader...")
+        task.execute_agent("proofreader", project_id, workflow_id, {})
+        
+        update_workflow_progress.delay(workflow_id, 12, 15, "editing", "Running Sensitivity Reader...")
+        task.execute_agent("sensitivity_reader", project_id, workflow_id, {})
+        
+        update_workflow_progress.delay(workflow_id, 12, 15, "editing", "Phase 3 (Editing) completed")
         
         return {
             "phase": 3,
@@ -237,32 +220,23 @@ def phase_3_complete(phase_result, project_id: str, workflow_id: str):
 
 @celery_app.task(name="workflow.phase_4")
 def execute_phase_4(project_id: str, workflow_id: str):
-    """
-    Execute Phase 4: Assembly.
-    
-    Agents:
-    13. Formatter - Format manuscript
-    14. Cover Designer - Generate cover art
-    15. Metadata Generator - Create metadata
-    
-    Args:
-        project_id: Project UUID
-        workflow_id: Workflow state UUID
-        
-    Returns:
-        dict: Phase execution result
-    """
+    """Execute Phase 4: Assembly."""
     logger.info(f"Phase 4 (Assembly) started for workflow {workflow_id}")
     
     try:
-        # TODO: Execute agents
-        update_workflow_progress.delay(
-            workflow_id,
-            current_step=15,
-            total_steps=15,
-            phase="assembly",
-            message="Phase 4 (Assembly) completed"
-        )
+        from .agent_tasks import AgentTask
+        task = AgentTask()
+        
+        update_workflow_progress.delay(workflow_id, 13, 15, "assembly", "Running Formatter...")
+        task.execute_agent("formatter", project_id, workflow_id, {})
+        
+        update_workflow_progress.delay(workflow_id, 14, 15, "assembly", "Running Cover Designer...")
+        task.execute_agent("cover_designer", project_id, workflow_id, {})
+        
+        update_workflow_progress.delay(workflow_id, 15, 15, "assembly", "Running Metadata Generator...")
+        task.execute_agent("metadata_generator", project_id, workflow_id, {})
+        
+        update_workflow_progress.delay(workflow_id, 15, 15, "assembly", "Phase 4 (Assembly) completed")
         
         return {
             "phase": 4,
@@ -289,8 +263,29 @@ def workflow_complete(phase_result, project_id: str, workflow_id: str):
     logger.info(f"Workflow {workflow_id} completed successfully")
     
     try:
-        # TODO: Update workflow state to completed in database
-        # TODO: Send completion notification via WebSocket
+        async def _complete():
+            async with get_session_factory()() as session:
+                repo = WorkflowStateRepository(session)
+                await repo.update(
+                    workflow_id,
+                    status="completed",
+                    progress_percentage=100.0,
+                    current_phase="completed"
+                )
+                await session.commit()
+                
+            redis = aioredis.from_url(settings.CELERY_BROKER_URL)
+            payload = json.dumps({
+                "type": "status",
+                "project_id": project_id,
+                "workflow_id": workflow_id,
+                "status": "completed",
+                "message": "Workflow completed successfully"
+            })
+            await redis.publish("workflow_updates", payload)
+            await redis.aclose()
+
+        asyncio.run(_complete())
         
         return {
             "status": "completed",
@@ -325,9 +320,39 @@ def update_workflow_progress(
     logger.info(f"Updating workflow {workflow_id} progress: {current_step}/{total_steps}")
     
     try:
-        # TODO: Update database
-        # TODO: Broadcast via WebSocket
-        pass
+        async def _update():
+            # Get project_id first
+            project_id = None
+            progress = (current_step / total_steps) * 100.0 if total_steps > 0 else 0.0
+            
+            async with get_session_factory()() as session:
+                repo = WorkflowStateRepository(session)
+                # First fetch to get project_id for broadcast
+                state = await repo.get_by_id(workflow_id)
+                if state:
+                    project_id = str(state.project_id)
+                    await repo.update(
+                        workflow_id,
+                        progress_percentage=progress,
+                        current_phase=phase
+                    )
+                    await session.commit()
+            
+            if project_id:
+                redis = aioredis.from_url(settings.CELERY_BROKER_URL)
+                payload = json.dumps({
+                    "type": "progress",
+                    "project_id": project_id,
+                    "workflow_id": workflow_id,
+                    "phase": phase,
+                    "agent": "System",
+                    "progress": progress,
+                    "message": message
+                })
+                await redis.publish("workflow_updates", payload)
+                await redis.aclose()
+
+        asyncio.run(_update())
         
     except Exception as e:
         logger.error(f"Failed to update workflow progress: {e}", exc_info=True)
@@ -345,9 +370,43 @@ def mark_workflow_failed(workflow_id: str, error_message: str):
     logger.error(f"Marking workflow {workflow_id} as failed: {error_message}")
     
     try:
-        # TODO: Update database
-        # TODO: Send failure notification via WebSocket
-        pass
+        async def _fail():
+            project_id = None
+            async with get_session_factory()() as session:
+                repo = WorkflowStateRepository(session)
+                state = await repo.get_by_id(workflow_id)
+                if state:
+                    project_id = str(state.project_id)
+                    await repo.update(
+                        workflow_id,
+                        status="failed"
+                    )
+                    await session.commit()
+            
+            if project_id:
+                redis = aioredis.from_url(settings.CELERY_BROKER_URL)
+                payload = json.dumps({
+                    "type": "error",
+                    "project_id": project_id,
+                    "workflow_id": workflow_id,
+                    "error_message": error_message,
+                    "phase": "unknown",
+                    "agent": "System"
+                })
+                await redis.publish("workflow_updates", payload)
+                
+                # Also send status change
+                status_payload = json.dumps({
+                    "type": "status",
+                    "project_id": project_id,
+                    "workflow_id": workflow_id,
+                    "status": "failed",
+                    "message": f"Workflow failed: {error_message}"
+                })
+                await redis.publish("workflow_updates", status_payload)
+                await redis.aclose()
+
+        asyncio.run(_fail())
         
     except Exception as e:
         logger.error(f"Failed to mark workflow as failed: {e}", exc_info=True)

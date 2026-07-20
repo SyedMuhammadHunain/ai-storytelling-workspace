@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 # Global engine and session factory
 _engine: AsyncEngine | None = None
 _async_session_factory: async_sessionmaker[AsyncSession] | None = None
+_engine_loop_id: int | None = None
 
 
 def get_database_url() -> str:
@@ -53,12 +54,8 @@ def create_engine() -> AsyncEngine:
         database_url,
         echo=settings.DEBUG,  # Log SQL queries in debug mode
         pool_pre_ping=True,  # Verify connections before using
-        pool_size=10,  # Connection pool size
-        max_overflow=20,  # Max connections beyond pool_size
-        pool_recycle=3600,  # Recycle connections after 1 hour
-        pool_timeout=30,  # Timeout for getting connection from pool
-        # Use NullPool for testing to avoid connection issues
-        poolclass=NullPool if settings.TESTING else None,
+        # Use NullPool to prevent connection issues across different asyncio event loops
+        poolclass=NullPool,
     )
     
     logger.info(f"Created async engine for {settings.MYSQL_HOST}:{settings.MYSQL_PORT}/{settings.MYSQL_DATABASE}")
@@ -72,35 +69,52 @@ def get_session_factory() -> async_sessionmaker[AsyncSession]:
     Returns:
         Configured async_sessionmaker instance
     """
-    global _async_session_factory
-    
-    if _async_session_factory is None:
+    import asyncio
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        # If no loop is running, we can't safely cache per loop.
+        # Fallback to creating a new one or throwing.
+        # But usually this is called within an async function.
+        raise RuntimeError("No running event loop")
+
+    if not hasattr(loop, "_ai_session_factory"):
         engine = get_engine()
-        _async_session_factory = async_sessionmaker(
+        loop._ai_session_factory = async_sessionmaker(
             engine,
             class_=AsyncSession,
             expire_on_commit=False,  # Don't expire objects after commit
             autocommit=False,
             autoflush=False,
         )
-        logger.info("Created async session factory")
+        logger.info("Created async session factory for current loop")
     
-    return _async_session_factory
+    return loop._ai_session_factory
 
 
 def get_engine() -> AsyncEngine:
     """
-    Get or create global async engine.
+    Get or create async engine for the current event loop.
     
     Returns:
-        Global AsyncEngine instance
+        Configured AsyncEngine instance
     """
-    global _engine
-    
-    if _engine is None:
-        _engine = create_engine()
-    
-    return _engine
+    import asyncio
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        raise RuntimeError("No running event loop")
+
+    if not hasattr(loop, "_ai_engine"):
+        from sqlalchemy import pool
+        loop._ai_engine = create_async_engine(
+            settings.DATABASE_URL,
+            echo=settings.DB_ECHO,
+            poolclass=pool.NullPool,
+        )
+        logger.info("Created async engine for current loop")
+        
+    return loop._ai_engine
 
 
 @asynccontextmanager

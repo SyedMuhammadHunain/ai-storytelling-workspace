@@ -13,6 +13,7 @@ from ..config import settings
 from ..db.session import init_db, close_db
 from .exceptions import APIException
 from .middleware import LoggingMiddleware, ErrorHandlerMiddleware, RateLimitMiddleware
+from .websocket.manager import manager
 
 # Configure structured logging
 logging.basicConfig(
@@ -40,12 +41,16 @@ async def lifespan(app: FastAPI):
     # Note: Tables should be created via Alembic migrations, not init_db()
     # await init_db()  # Only use in development/testing
     
+    # Start Redis Pub/Sub listener for workflow updates from Celery
+    await manager.start_redis_listener()
+    
     logger.info("API server started successfully")
     
     yield
     
     # Shutdown
     logger.info("Shutting down API server...")
+    await manager.stop_redis_listener()
     await close_db()
     logger.info("Database connections closed")
 
@@ -191,7 +196,6 @@ async def health_check():
 
 # WebSocket endpoint for real-time updates
 from fastapi import WebSocket, WebSocketDisconnect
-from .websocket.manager import manager
 
 
 @app.websocket("/ws/{project_id}")

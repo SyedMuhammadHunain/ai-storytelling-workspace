@@ -5,6 +5,10 @@ from typing import Dict, Set
 from datetime import datetime
 
 from fastapi import WebSocket
+import asyncio
+import json
+import redis.asyncio as aioredis
+from storytelling_workspace.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +25,9 @@ class ConnectionManager:
         """Initialize connection manager."""
         # Map of project_id -> set of WebSocket connections
         self.active_connections: Dict[str, Set[WebSocket]] = {}
+        self.redis_client = None
+        self.pubsub = None
+        self.listener_task = None
         logger.info("WebSocket ConnectionManager initialized")
     
     async def connect(self, websocket: WebSocket, project_id: str):
@@ -241,6 +248,39 @@ class ConnectionManager:
             List of project UUIDs
         """
         return list(self.active_connections.keys())
+
+    async def start_redis_listener(self):
+        """Start listening to Redis pub/sub channel for workflow updates."""
+        try:
+            self.redis_client = aioredis.from_url(settings.redis_url)
+            self.pubsub = self.redis_client.pubsub()
+            await self.pubsub.subscribe("workflow_updates")
+            
+            logger.info("Started Redis Pub/Sub listener for workflow updates")
+            
+            async def listen():
+                try:
+                    async for message in self.pubsub.listen():
+                        if message["type"] == "message":
+                            data = json.loads(message["data"])
+                            project_id = data.get("project_id")
+                            if project_id and project_id in self.active_connections:
+                                await self.broadcast_to_project(project_id, data)
+                except Exception as e:
+                    logger.error(f"Error in Redis listener task: {e}")
+            
+            self.listener_task = asyncio.create_task(listen())
+        except Exception as e:
+            logger.error(f"Failed to start Redis listener: {e}")
+
+    async def stop_redis_listener(self):
+        """Stop the Redis listener."""
+        if self.listener_task:
+            self.listener_task.cancel()
+        if self.pubsub:
+            await self.pubsub.unsubscribe("workflow_updates")
+        if self.redis_client:
+            await self.redis_client.aclose()
 
 
 # Global manager instance
