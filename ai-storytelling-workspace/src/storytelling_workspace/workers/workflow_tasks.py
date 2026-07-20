@@ -5,15 +5,7 @@ from typing import Optional
 from uuid import UUID
 
 from celery import chain, group
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from .celery_app import celery_app, WorkflowTask
-from ..db.session import async_session_maker
-from ..db.repositories import (
-    WorkflowStateRepository,
-    ProjectRepository,
-    CheckpointRepository,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -398,4 +390,22 @@ def cancel_workflow_task(workflow_id: str):
         
     except Exception as e:
         logger.error(f"Failed to cancel workflow: {e}", exc_info=True)
+        raise
+
+@celery_app.task(name="workflow.resume")
+def resume_workflow_task(workflow_id: str):
+    """
+    Resume workflow execution.
+    
+    Args:
+        workflow_id: Workflow state UUID
+    """
+    logger.info(f"Resuming workflow {workflow_id}")
+    
+    try:
+        # TODO: Implement resume logic
+        pass
+        
+    except Exception as e:
+        logger.error(f"Failed to resume workflow: {e}", exc_info=True)
         raise

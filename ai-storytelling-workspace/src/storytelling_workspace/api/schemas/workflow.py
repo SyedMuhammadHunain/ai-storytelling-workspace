@@ -68,6 +68,7 @@ class WorkflowStatusResponse(BaseModel):
     id: UUID = Field(..., description="Workflow UUID")
     project_id: UUID = Field(..., description="Project UUID")
     status: Literal[
+        'idle',
         'running',
         'paused',
         'completed',

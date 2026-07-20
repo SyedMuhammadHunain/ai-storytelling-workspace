@@ -244,15 +244,21 @@ export class WorkflowExecutionComponent implements OnInit, OnDestroy, AfterViewC
   }
 
   start(): void {
-    this.workflowService.startWorkflow(this.projectId).subscribe();
+    this.workflowService.startWorkflow(this.projectId).subscribe({
+      error: (err) => console.error('Failed to start workflow:', err)
+    });
   }
 
   pause(): void {
-    this.workflowService.pauseWorkflow(this.projectId).subscribe();
+    this.workflowService.pauseWorkflow(this.projectId).subscribe({
+      error: (err) => console.error('Failed to pause workflow:', err)
+    });
   }
 
   resume(): void {
-    this.workflowService.resumeWorkflow(this.projectId).subscribe();
+    this.workflowService.resumeWorkflow(this.projectId).subscribe({
+      error: (err) => console.error('Failed to resume workflow:', err)
+    });
   }
 
   getStatusColor(status: string): string {

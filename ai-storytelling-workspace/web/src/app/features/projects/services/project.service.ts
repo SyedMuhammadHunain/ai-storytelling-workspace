@@ -14,7 +14,7 @@ export class ProjectService {
   constructor(private api: ApiService) {}
 
   getProjects(page: number = 1, pageSize: number = 20): Observable<ProjectListResponse> {
-    return this.api.get<ProjectListResponse>('/projects', { page, page_size: pageSize })
+    return this.api.get<ProjectListResponse>('/projects/', { page, page_size: pageSize })
       .pipe(
         tap((response: ProjectListResponse) => this.projectsSubject.next(response.projects))
       );
@@ -25,7 +25,7 @@ export class ProjectService {
   }
 
   createProject(data: ProjectCreate): Observable<Project> {
-    return this.api.post<Project>('/projects', data)
+    return this.api.post<Project>('/projects/', data)
       .pipe(
         tap((project: Project) => {
           const current = this.projectsSubject.value;
@@ -35,7 +35,7 @@ export class ProjectService {
   }
 
   updateProject(id: string, data: ProjectUpdate): Observable<Project> {
-    return this.api.patch<Project>(`/projects/${id}`, data)
+    return this.api.put<Project>(`/projects/${id}`, data)
       .pipe(
         tap((updated: Project) => {
           const current = this.projectsSubject.value;

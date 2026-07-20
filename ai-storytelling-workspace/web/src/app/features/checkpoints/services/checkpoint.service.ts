@@ -10,7 +10,7 @@ export class CheckpointService {
   constructor(private api: ApiService) {}
 
   getProjectCheckpoints(projectId: string): Observable<Checkpoint[]> {
-    return this.api.get<Checkpoint[]>(`/projects/${projectId}/checkpoints`);
+    return this.api.get<Checkpoint[]>('/checkpoints/', { project_id: projectId });
   }
 
   getCheckpoint(id: string): Observable<Checkpoint> {

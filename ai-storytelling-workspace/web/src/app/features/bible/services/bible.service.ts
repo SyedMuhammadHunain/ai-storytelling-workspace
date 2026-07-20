@@ -10,6 +10,6 @@ export class BibleService {
   constructor(private api: ApiService) {}
 
   getStoryBible(projectId: string): Observable<StoryBible> {
-    return this.api.get<StoryBible>(`/projects/${projectId}/bible`);
+    return this.api.get<StoryBible>(`/story-bible/project/${projectId}/latest`);
   }
 }

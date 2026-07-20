@@ -1,2 +1,0 @@
-{"id":"94777b1b-46a0-4b19-b388-d1a98101e64c","ts":"2026-07-19T11:21:00.118Z","path":"/home/hunain/Projects/bob-projects/ai-storytelling-workspace/web/src/index.html","version":"1.0.0","taskID":"4afac3fd-6b98-479a-8468-13b388701240"}
-{"id":"913e537d-9af3-4c55-a0a2-5ff292cd5e42","ts":"2026-07-19T11:31:21.288Z","path":"/home/hunain/Projects/bob-projects/ai-storytelling-workspace/web/src/main.ts","version":"1.0.0","taskID":"4afac3fd-6b98-479a-8468-13b388701240"}

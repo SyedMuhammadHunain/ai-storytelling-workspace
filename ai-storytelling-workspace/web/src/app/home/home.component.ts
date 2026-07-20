@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-home',
-  imports: [MatCardModule, MatButtonModule],
+  imports: [MatCardModule, MatButtonModule, RouterLink],
   template: `
     <div class="home-container">
       <mat-card>
@@ -23,7 +24,7 @@ import { MatButtonModule } from '@angular/material/button';
           </ul>
         </mat-card-content>
         <mat-card-actions>
-          <button mat-raised-button color="primary">Get Started</button>
+          <button mat-raised-button color="primary" routerLink="/projects">Get Started</button>
         </mat-card-actions>
       </mat-card>
     </div>

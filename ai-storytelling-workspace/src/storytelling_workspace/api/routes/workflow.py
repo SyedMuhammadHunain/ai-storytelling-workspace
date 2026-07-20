@@ -76,9 +76,8 @@ async def start_workflow(
     
     workflow_state = await workflow_repo.create(**workflow_data)
     
-    # TODO: Dispatch Celery task for async execution
-    # from ...workers.workflow_tasks import start_workflow_task
-    # start_workflow_task.delay(str(project_id), str(workflow_state.id))
+    from ...workers.workflow_tasks import start_workflow_task
+    start_workflow_task.delay(str(project_id), str(workflow_state.id))
     
     return WorkflowStatusResponse.model_validate(workflow_state)
 
@@ -119,7 +118,8 @@ async def pause_workflow(
         status="paused"
     )
     
-    # TODO: Signal Celery task to pause
+    from ...workers.workflow_tasks import pause_workflow_task
+    pause_workflow_task.delay(str(workflow.id))
     
     return WorkflowStatusResponse.model_validate(updated)
 
@@ -163,7 +163,8 @@ async def resume_workflow(
         status="running"
     )
     
-    # TODO: Signal Celery task to resume
+    from ...workers.workflow_tasks import resume_workflow_task
+    resume_workflow_task.delay(str(workflow.id))
     
     return WorkflowStatusResponse.model_validate(updated)
 
@@ -194,7 +195,23 @@ async def get_workflow_status(
     # Get latest workflow (active or completed)
     workflow = await workflow_repo.get_latest_by_project(str(project_id))
     if not workflow:
-        raise WorkflowNotFoundException(str(project_id))
+        from datetime import datetime, timezone
+        from uuid import UUID
+        return WorkflowStatusResponse(
+            id=UUID('00000000-0000-0000-0000-000000000000'),
+            project_id=project_id,
+            status='idle',
+            current_phase='none',
+            current_agent=None,
+            progress_percentage=0.0,
+            completed_steps=0,
+            total_steps=15,
+            started_at=datetime.now(timezone.utc),
+            paused_at=None,
+            resumed_at=None,
+            completed_at=None,
+            error_message=None
+        )
     
     return WorkflowStatusResponse.model_validate(workflow)
 
@@ -233,6 +250,7 @@ async def cancel_workflow(
         status="cancelled"
     )
     
-    # TODO: Signal Celery task to cancel
+    from ...workers.workflow_tasks import cancel_workflow_task
+    cancel_workflow_task.delay(str(workflow.id))
     
     return WorkflowStatusResponse.model_validate(updated)

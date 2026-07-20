@@ -64,9 +64,11 @@ celery_app.conf.update(
 )
 
 # Auto-discover tasks
-celery_app.autodiscover_tasks([
-    "storytelling_workspace.workers"
-])
+celery_app.conf.imports = (
+    "storytelling_workspace.workers.workflow_tasks",
+    "storytelling_workspace.workers.agent_tasks",
+    "storytelling_workspace.workers.image_tasks"
+)
 
 
 # Task base classes for common functionality
