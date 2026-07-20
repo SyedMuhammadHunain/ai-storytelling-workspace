@@ -143,7 +143,7 @@ class AIAgent(BaseAgent):
         """
         pass
     
-    async async def execute(self, bible: StoryBible) -> Dict[str, Any]:
+    async def execute(self, bible: StoryBible) -> Dict[str, Any]:
         """
         Execute the AI agent.
         
