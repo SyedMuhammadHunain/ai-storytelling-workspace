@@ -2,15 +2,13 @@
 
 import logging
 from typing import Optional
-from uuid import UUID
 import asyncio
 import json
 import redis.asyncio as aioredis
 
-from celery import chain, group
-from .celery_app import celery_app, WorkflowTask
+from .celery_app import celery_app, WorkflowTask, run_async
 from ..config import settings
-from ..db.session import get_session_factory
+from ..db.worker_session import worker_session
 from ..db.repositories.workflow_state import WorkflowStateRepository
 
 logger = logging.getLogger(__name__)
@@ -27,20 +25,10 @@ def start_workflow_task(
     Start workflow execution for a project.
     
     This is the main orchestration task that coordinates all workflow phases.
-    
-    Args:
-        self: Task instance (bound)
-        project_id: Project UUID
-        workflow_id: Workflow state UUID
-        resume_from_checkpoint: Optional checkpoint ID to resume from
-        
-    Returns:
-        dict: Workflow execution result
     """
     logger.info(f"Starting workflow {workflow_id} for project {project_id}")
     
     try:
-        # Update initial progress
         self.update_state(
             state="PROGRESS",
             meta={
@@ -67,7 +55,6 @@ def start_workflow_task(
         
     except Exception as e:
         logger.error(f"Failed to start workflow {workflow_id}: {e}", exc_info=True)
-        # Mark workflow as failed
         mark_workflow_failed.delay(workflow_id, str(e))
         raise
 
@@ -109,17 +96,9 @@ def execute_phase_1(project_id: str, workflow_id: str):
 
 @celery_app.task(name="workflow.phase_1_complete")
 def phase_1_complete(phase_result, project_id: str, workflow_id: str):
-    """
-    Callback after Phase 1 completion.
-    
-    Args:
-        phase_result: Result from Phase 1
-        project_id: Project UUID
-        workflow_id: Workflow state UUID
-    """
+    """Callback after Phase 1 completion."""
     logger.info(f"Phase 1 completed for workflow {workflow_id}, starting Phase 2")
     
-    # Start Phase 2
     execute_phase_2.apply_async(
         args=[project_id, workflow_id],
         link=phase_2_complete.s(project_id, workflow_id)
@@ -252,19 +231,12 @@ def execute_phase_4(project_id: str, workflow_id: str):
 
 @celery_app.task(name="workflow.complete")
 def workflow_complete(phase_result, project_id: str, workflow_id: str):
-    """
-    Mark workflow as completed.
-    
-    Args:
-        phase_result: Result from Phase 4
-        project_id: Project UUID
-        workflow_id: Workflow state UUID
-    """
+    """Mark workflow as completed."""
     logger.info(f"Workflow {workflow_id} completed successfully")
     
     try:
         async def _complete():
-            async with get_session_factory()() as session:
+            async with worker_session() as session:
                 repo = WorkflowStateRepository(session)
                 await repo.update(
                     workflow_id,
@@ -285,7 +257,6 @@ def workflow_complete(phase_result, project_id: str, workflow_id: str):
             await redis.publish("workflow_updates", payload)
             await redis.aclose()
 
-        from storytelling_workspace.workers.celery_app import run_async
         run_async(_complete())
         
         return {
@@ -308,52 +279,50 @@ def update_workflow_progress(
     phase: str,
     message: str
 ):
-    """
-    Update workflow progress in database.
-    
-    Args:
-        workflow_id: Workflow state UUID
-        current_step: Current step number
-        total_steps: Total number of steps
-        phase: Current phase name
-        message: Progress message
-    """
-    logger.info(f"Updating workflow {workflow_id} progress: {current_step}/{total_steps}")
+    """Update workflow progress in database."""
+    logger.info(f"Updating workflow {workflow_id} progress: {current_step}/{total_steps} - {message}")
     
     try:
         async def _update():
-            # Get project_id first
             project_id = None
             progress = (current_step / total_steps) * 100.0 if total_steps > 0 else 0.0
             
-            async with get_session_factory()() as session:
+            async with worker_session() as session:
                 repo = WorkflowStateRepository(session)
-                # First fetch to get project_id for broadcast
                 state = await repo.get_by_id(workflow_id)
                 if state:
                     project_id = str(state.project_id)
                     await repo.update(
                         workflow_id,
+                        current_phase=phase,
+                        current_agent=message,
                         progress_percentage=progress,
-                        current_phase=phase
+                        completed_steps=current_step,
+                        total_steps=total_steps,
+                        status="running"
                     )
                     await session.commit()
             
+            # Publish WebSocket update
             if project_id:
-                redis = aioredis.from_url(settings.CELERY_BROKER_URL)
-                payload = json.dumps({
-                    "type": "progress",
-                    "project_id": project_id,
-                    "workflow_id": workflow_id,
-                    "phase": phase,
-                    "agent": "System",
-                    "progress": progress,
-                    "message": message
-                })
-                await redis.publish("workflow_updates", payload)
-                await redis.aclose()
+                try:
+                    redis = aioredis.from_url(settings.CELERY_BROKER_URL)
+                    payload = json.dumps({
+                        "type": "progress",
+                        "project_id": project_id,
+                        "workflow_id": workflow_id,
+                        "status": "running",
+                        "current_step": current_step,
+                        "total_steps": total_steps,
+                        "phase": phase,
+                        "message": message,
+                        "progress": progress
+                    })
+                    await redis.publish("workflow_updates", payload)
+                    await redis.aclose()
+                except Exception as redis_err:
+                    logger.warning(f"Failed to publish progress to Redis: {redis_err}")
 
-        from storytelling_workspace.workers.celery_app import run_async
         run_async(_update())
         
     except Exception as e:
@@ -362,53 +331,40 @@ def update_workflow_progress(
 
 @celery_app.task(name="workflow.mark_failed")
 def mark_workflow_failed(workflow_id: str, error_message: str):
-    """
-    Mark workflow as failed.
-    
-    Args:
-        workflow_id: Workflow state UUID
-        error_message: Error message
-    """
+    """Mark workflow as failed."""
     logger.error(f"Marking workflow {workflow_id} as failed: {error_message}")
     
     try:
         async def _fail():
             project_id = None
-            async with get_session_factory()() as session:
+            async with worker_session() as session:
                 repo = WorkflowStateRepository(session)
                 state = await repo.get_by_id(workflow_id)
                 if state:
                     project_id = str(state.project_id)
                     await repo.update(
                         workflow_id,
-                        status="failed"
+                        status="failed",
+                        error_message=error_message
                     )
                     await session.commit()
             
+            # Publish failure via WebSocket
             if project_id:
-                redis = aioredis.from_url(settings.CELERY_BROKER_URL)
-                payload = json.dumps({
-                    "type": "error",
-                    "project_id": project_id,
-                    "workflow_id": workflow_id,
-                    "error_message": error_message,
-                    "phase": "unknown",
-                    "agent": "System"
-                })
-                await redis.publish("workflow_updates", payload)
-                
-                # Also send status change
-                status_payload = json.dumps({
-                    "type": "status",
-                    "project_id": project_id,
-                    "workflow_id": workflow_id,
-                    "status": "failed",
-                    "message": f"Workflow failed: {error_message}"
-                })
-                await redis.publish("workflow_updates", status_payload)
-                await redis.aclose()
+                try:
+                    redis = aioredis.from_url(settings.CELERY_BROKER_URL)
+                    status_payload = json.dumps({
+                        "type": "error",
+                        "project_id": project_id,
+                        "workflow_id": workflow_id,
+                        "status": "failed",
+                        "message": error_message
+                    })
+                    await redis.publish("workflow_updates", status_payload)
+                    await redis.aclose()
+                except Exception as redis_err:
+                    logger.warning(f"Failed to publish failure to Redis: {redis_err}")
 
-        from storytelling_workspace.workers.celery_app import run_async
         run_async(_fail())
         
     except Exception as e:
@@ -417,18 +373,38 @@ def mark_workflow_failed(workflow_id: str, error_message: str):
 
 @celery_app.task(name="workflow.pause")
 def pause_workflow_task(workflow_id: str):
-    """
-    Pause workflow execution.
-    
-    Args:
-        workflow_id: Workflow state UUID
-    """
+    """Pause workflow execution."""
     logger.info(f"Pausing workflow {workflow_id}")
     
     try:
-        # TODO: Implement pause logic
-        # This would involve signaling running tasks to stop gracefully
-        pass
+        async def _pause():
+            async with worker_session() as session:
+                repo = WorkflowStateRepository(session)
+                state = await repo.get_by_id(workflow_id)
+                if state:
+                    project_id = str(state.project_id)
+                    await repo.update(
+                        workflow_id,
+                        status="paused"
+                    )
+                    await session.commit()
+                    
+                    # Publish pause via WebSocket
+                    try:
+                        redis = aioredis.from_url(settings.CELERY_BROKER_URL)
+                        payload = json.dumps({
+                            "type": "status",
+                            "project_id": project_id,
+                            "workflow_id": workflow_id,
+                            "status": "paused",
+                            "message": "Workflow paused"
+                        })
+                        await redis.publish("workflow_updates", payload)
+                        await redis.aclose()
+                    except Exception as redis_err:
+                        logger.warning(f"Failed to publish pause to Redis: {redis_err}")
+                        
+        run_async(_pause())
         
     except Exception as e:
         logger.error(f"Failed to pause workflow: {e}", exc_info=True)
@@ -437,18 +413,37 @@ def pause_workflow_task(workflow_id: str):
 
 @celery_app.task(name="workflow.cancel")
 def cancel_workflow_task(workflow_id: str):
-    """
-    Cancel workflow execution.
-    
-    Args:
-        workflow_id: Workflow state UUID
-    """
+    """Cancel workflow execution."""
     logger.info(f"Cancelling workflow {workflow_id}")
     
     try:
-        # TODO: Implement cancel logic
-        # This would involve terminating running tasks
-        pass
+        async def _cancel():
+            async with worker_session() as session:
+                repo = WorkflowStateRepository(session)
+                state = await repo.get_by_id(workflow_id)
+                if state:
+                    project_id = str(state.project_id)
+                    await repo.update(
+                        workflow_id,
+                        status="cancelled"
+                    )
+                    await session.commit()
+                    
+                    try:
+                        redis = aioredis.from_url(settings.CELERY_BROKER_URL)
+                        payload = json.dumps({
+                            "type": "status",
+                            "project_id": project_id,
+                            "workflow_id": workflow_id,
+                            "status": "cancelled",
+                            "message": "Workflow cancelled"
+                        })
+                        await redis.publish("workflow_updates", payload)
+                        await redis.aclose()
+                    except Exception as redis_err:
+                        logger.warning(f"Failed to publish cancel to Redis: {redis_err}")
+        
+        run_async(_cancel())
         
     except Exception as e:
         logger.error(f"Failed to cancel workflow: {e}", exc_info=True)
@@ -456,17 +451,38 @@ def cancel_workflow_task(workflow_id: str):
 
 @celery_app.task(name="workflow.resume")
 def resume_workflow_task(workflow_id: str):
-    """
-    Resume workflow execution.
-    
-    Args:
-        workflow_id: Workflow state UUID
-    """
+    """Resume workflow execution."""
     logger.info(f"Resuming workflow {workflow_id}")
     
     try:
-        # TODO: Implement resume logic
-        pass
+        async def _resume():
+            async with worker_session() as session:
+                repo = WorkflowStateRepository(session)
+                state = await repo.get_by_id(workflow_id)
+                if state:
+                    project_id = str(state.project_id)
+                    current_phase = state.current_phase or "setup"
+                    await repo.update(
+                        workflow_id,
+                        status="running"
+                    )
+                    await session.commit()
+                    
+                    try:
+                        redis = aioredis.from_url(settings.CELERY_BROKER_URL)
+                        payload = json.dumps({
+                            "type": "status",
+                            "project_id": project_id,
+                            "workflow_id": workflow_id,
+                            "status": "running",
+                            "message": f"Workflow resumed from phase: {current_phase}"
+                        })
+                        await redis.publish("workflow_updates", payload)
+                        await redis.aclose()
+                    except Exception as redis_err:
+                        logger.warning(f"Failed to publish resume to Redis: {redis_err}")
+                        
+        run_async(_resume())
         
     except Exception as e:
         logger.error(f"Failed to resume workflow: {e}", exc_info=True)

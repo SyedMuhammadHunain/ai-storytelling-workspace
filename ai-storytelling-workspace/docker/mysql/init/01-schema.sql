@@ -7,7 +7,7 @@ SET NAMES utf8mb4;
 SET CHARACTER SET utf8mb4;
 
 -- Use the database
-USE storytelling_workspace;
+USE storytelling;
 
 -- ============================================================================
 -- Table: projects
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS projects (
     description TEXT,
     genre VARCHAR(100),
     target_length INT DEFAULT 80000 COMMENT 'Target word count',
-    status ENUM('draft', 'in_progress', 'paused', 'completed', 'archived') DEFAULT 'draft',
+    status ENUM('DRAFT', 'IN_PROGRESS', 'PAUSED', 'COMPLETED', 'ARCHIVED') DEFAULT 'DRAFT',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL COMMENT 'Soft delete timestamp',

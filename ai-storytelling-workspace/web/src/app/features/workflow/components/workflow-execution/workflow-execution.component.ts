@@ -34,6 +34,21 @@ import { Observable } from 'rxjs';
           </mat-chip>
         </div>
 
+      @if (state.status === 'failed' || state.status === 'cancelled') {
+        <div class="error-banner" [class.cancelled-banner]="state.status === 'cancelled'">
+          <mat-icon>{{ state.status === 'failed' ? 'error' : 'cancel' }}</mat-icon>
+          <div class="error-content">
+            <strong>{{ state.status === 'failed' ? 'Workflow Failed' : 'Workflow Cancelled' }}</strong>
+            @if (state.error_message) {
+              <p>{{ state.error_message }}</p>
+            }
+          </div>
+          <button mat-flat-button color="primary" (click)="start()" class="retry-button">
+            <mat-icon>replay</mat-icon> Retry
+          </button>
+        </div>
+      }
+
       <div class="control-panel">
         <mat-card>
           <mat-card-content class="panel-content">
@@ -61,16 +76,22 @@ import { Observable } from 'rxjs';
                 </button>
               }
 
-              @if (state.status === 'paused' || state.status === 'failed') {
+              @if (state.status === 'paused') {
                 <button mat-flat-button color="primary" (click)="resume()">
                   <mat-icon>play_arrow</mat-icon> Resume
+                </button>
+              }
+
+              @if (state.status === 'failed' || state.status === 'cancelled') {
+                <button mat-flat-button color="primary" (click)="start()">
+                  <mat-icon>replay</mat-icon> Restart
                 </button>
               }
             </div>
           </mat-card-content>
           
           <mat-progress-bar 
-            [mode]="state.status === 'running' ? 'indeterminate' : 'determinate'" 
+            [mode]="getProgressBarMode(state.status)" 
             [value]="state.progress">
           </mat-progress-bar>
         </mat-card>
@@ -90,8 +111,8 @@ import { Observable } from 'rxjs';
               </div>
             }
             @for (log of state.logs; track log) {
-              <div class="log-entry">
-                <span class="prompt">$</span> {{ log }}
+              <div class="log-entry" [class.error-log]="isErrorLog(log)">
+                <span class="prompt" [class.error-prompt]="isErrorLog(log)">{{ isErrorLog(log) ? '!' : '$' }}</span> {{ log }}
               </div>
             }
           </div>
@@ -119,6 +140,47 @@ import { Observable } from 'rxjs';
     
     .status-chip {
       margin-left: auto;
+    }
+
+    .error-banner {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      background-color: #fdeded;
+      border: 1px solid #f5c6cb;
+      border-left: 4px solid #f44336;
+      border-radius: 4px;
+      color: #611a15;
+    }
+
+    .cancelled-banner {
+      background-color: #fff3e0;
+      border-color: #ffe0b2;
+      border-left-color: #ff9800;
+      color: #663c00;
+    }
+
+    .error-banner mat-icon {
+      color: #f44336;
+      flex-shrink: 0;
+    }
+
+    .cancelled-banner mat-icon {
+      color: #ff9800;
+    }
+
+    .error-content {
+      flex: 1;
+    }
+
+    .error-content p {
+      margin: 4px 0 0 0;
+      font-size: 0.9em;
+    }
+
+    .retry-button {
+      flex-shrink: 0;
     }
 
     .panel-content {
@@ -185,9 +247,17 @@ import { Observable } from 'rxjs';
       word-wrap: break-word;
     }
 
+    .error-log {
+      color: #ef9a9a;
+    }
+
     .prompt {
       color: #4CAF50;
       margin-right: 8px;
+    }
+
+    .error-prompt {
+      color: #f44336;
     }
 
     .empty-log {
@@ -264,10 +334,20 @@ export class WorkflowExecutionComponent implements OnInit, OnDestroy, AfterViewC
   getStatusColor(status: string): string {
     switch(status) {
       case 'running': return 'primary';
-      case 'completed': return 'primary'; // Or maybe an alternate color if available
+      case 'completed': return 'primary';
       case 'failed': return 'warn';
+      case 'cancelled': return 'warn';
       case 'paused': return 'accent';
       default: return 'primary';
     }
+  }
+
+  getProgressBarMode(status: string): 'indeterminate' | 'determinate' {
+    // Only animate the progress bar while actively running
+    return status === 'running' ? 'indeterminate' : 'determinate';
+  }
+
+  isErrorLog(log: string): boolean {
+    return log.includes('ERROR:') || log.includes('FAILED:');
   }
 }

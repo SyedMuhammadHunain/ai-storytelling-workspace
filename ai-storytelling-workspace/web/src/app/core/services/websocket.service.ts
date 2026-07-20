@@ -16,6 +16,8 @@ export class WebSocketService {
   private socket: WebSocket | null = null;
   private messagesSubject = new Subject<WebSocketMessage>();
   public messages$ = this.messagesSubject.asObservable();
+  private connectionFailedSubject = new Subject<void>();
+  public connectionFailed$ = this.connectionFailedSubject.asObservable();
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private intentionallyDisconnected = false;
@@ -80,6 +82,7 @@ export class WebSocketService {
       }, delay);
     } else {
       console.error('Max reconnection attempts reached');
+      this.connectionFailedSubject.next();
     }
   }
 

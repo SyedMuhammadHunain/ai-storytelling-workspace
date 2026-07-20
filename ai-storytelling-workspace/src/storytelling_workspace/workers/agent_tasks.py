@@ -25,13 +25,13 @@ class AgentTask(BaseTask):
         
         import asyncio
         import importlib
-        from storytelling_workspace.db.session import get_session_factory
+        from storytelling_workspace.db.worker_session import worker_session
         from storytelling_workspace.db.repositories.story_bible import StoryBibleRepository
         from storytelling_workspace.core.ai_provider import AIProviderFactory
         from storytelling_workspace.story_bible import StoryBible
         
         async def fetch_bible():
-            async with get_session_factory()() as session:
+            async with worker_session() as session:
                 repo = StoryBibleRepository(session)
                 db_bible = await repo.get_latest_by_project(project_id)
                 if not db_bible:
@@ -52,7 +52,7 @@ class AgentTask(BaseTask):
                 }
 
         async def save_bible(updated_bible):
-            async with get_session_factory()() as session:
+            async with worker_session() as session:
                 repo = StoryBibleRepository(session)
                 db_bible = await repo.get_latest_by_project(project_id)
                 domain_dict = updated_bible.to_dict()

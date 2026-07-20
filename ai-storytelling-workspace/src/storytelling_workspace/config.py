@@ -26,6 +26,15 @@ class Settings(BaseSettings):
     MYSQL_PASSWORD: str = os.getenv("MYSQL_PASSWORD", "password")
     MYSQL_DATABASE: str = os.getenv("MYSQL_DATABASE", "storytelling_workspace")
     
+    # Computed database URL
+    DATABASE_URL: str = os.getenv(
+        "DATABASE_URL",
+        f"mysql+aiomysql://{os.getenv('MYSQL_USER', 'user')}:{os.getenv('MYSQL_PASSWORD', 'password')}"
+        f"@{os.getenv('MYSQL_HOST', 'localhost')}:{os.getenv('MYSQL_PORT', '3306')}"
+        f"/{os.getenv('MYSQL_DATABASE', 'storytelling_workspace')}"
+    )
+    DB_ECHO: bool = os.getenv("SQL_ECHO", "false").lower() == "true"
+    
     # Redis
     REDIS_HOST: str = os.getenv("REDIS_HOST", "localhost")
     REDIS_PORT: int = int(os.getenv("REDIS_PORT", "6379"))
