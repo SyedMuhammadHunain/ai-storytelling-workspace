@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { ApiService } from '../../../core/services/api.service';
-import { Checkpoint, CheckpointUpdate } from '../models/checkpoint.model';
+import { Checkpoint, CheckpointUpdate, CheckpointListResponse } from '../models/checkpoint.model';
 
 @Injectable({
   providedIn: 'root'
@@ -10,7 +11,9 @@ export class CheckpointService {
   constructor(private api: ApiService) {}
 
   getProjectCheckpoints(projectId: string): Observable<Checkpoint[]> {
-    return this.api.get<Checkpoint[]>('/checkpoints/', { project_id: projectId });
+    return this.api.get<CheckpointListResponse>('/checkpoints/', { project_id: projectId }).pipe(
+      map(response => response.checkpoints)
+    );
   }
 
   getCheckpoint(id: string): Observable<Checkpoint> {

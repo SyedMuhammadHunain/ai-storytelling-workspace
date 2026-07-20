@@ -11,3 +11,9 @@ export interface GenerateImageRequest {
   prompt: string;
   type: 'cover' | 'character' | 'scene';
 }
+
+export interface ImageListResponse {
+  images: ProjectImage[];
+  total: number;
+  by_type: Record<string, number>;
+}

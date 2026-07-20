@@ -12,3 +12,9 @@ export interface CheckpointUpdate {
   content?: any;
   status?: string;
 }
+
+export interface CheckpointListResponse {
+  checkpoints: Checkpoint[];
+  total: number;
+  pending_count: number;
+}
