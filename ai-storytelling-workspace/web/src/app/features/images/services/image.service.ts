@@ -29,7 +29,7 @@ export class ImageService {
       map(response => ({
         id: response.image_id || response.id || crypto.randomUUID(),
         project_id: projectId,
-        url: response.url || response.file_path || 'assets/placeholder.png',
+        url: response.url || response.file_path || 'assets/placeholder.jpg',
         prompt: request.prompt,
         type: request.type as 'cover'|'character'|'scene',
         created_at: new Date().toISOString()
