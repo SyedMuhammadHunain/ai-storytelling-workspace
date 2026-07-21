@@ -110,5 +110,6 @@ async def generate_image(
         image_id=uuid.UUID(image_id),
         status="completed",
         message="Image generated successfully",
-        estimated_time_seconds=0
+        estimated_time_seconds=0,
+        url=image_url
     )

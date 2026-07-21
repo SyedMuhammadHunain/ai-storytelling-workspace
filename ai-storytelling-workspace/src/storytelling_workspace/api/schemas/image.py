@@ -172,6 +172,10 @@ class ImageGenerationResponse(BaseModel):
         ge=0,
         description="Estimated generation time in seconds"
     )
+    url: Optional[str] = Field(
+        None,
+        description="Generated image URL"
+    )
     
     model_config = {
         "json_schema_extra": {
@@ -179,7 +183,8 @@ class ImageGenerationResponse(BaseModel):
                 "image_id": "123e4567-e89b-12d3-a456-426614174000",
                 "status": "queued",
                 "message": "Image generation queued",
-                "estimated_time_seconds": 30
+                "estimated_time_seconds": 30,
+                "url": "https://image.pollinations.ai/prompt/example"
             }
         }
     }
