@@ -1,28 +1,23 @@
-# Security & Hardening Policy
+# Security Audit Report
 
-## Overview
-This document outlines the security measures, rate limiting, and optimization strategies employed within the AI Storytelling Workspace API and Frontend.
+## 1. Input Handling & Injection Vectors
+- **Status**: Secure
+- **Findings**: The application relies heavily on FastAPI and Pydantic for input validation. All endpoints use strong typing (e.g. `UUID`, bounded `str`, `int`), preventing malformed requests.
+- **SQL Injection**: SQLAlchemy is used as an ORM (`select`, `insert`, etc.), properly escaping inputs. No raw SQL queries are present in the codebase.
 
-## Backend Security (FastAPI)
+## 2. Authentication & Authorization
+- **Status**: Not Applicable (Local Dev Tool)
+- **Findings**: Currently, the API is designed as a local-first workspace. There are no authentication mechanisms (e.g. JWT, OAuth2) implemented. For production deployment over the internet, a robust authentication layer MUST be implemented.
 
-### Rate Limiting
-- A custom IP-based `RateLimitMiddleware` has been added to prevent API abuse.
-- By default, requests are limited to 100 requests per minute per IP.
-- The AI Provider API calls also utilize a token bucket rate limiter in `core/rate_limiter.py` to prevent runaway costs from upstream LLM services (e.g., OpenAI, Anthropic).
+## 3. Data Protection
+- **Status**: Secure
+- **Findings**: Data is stored securely in MySQL (metadata) and local filesystem (storage/images). CORS is correctly configured in `config.py` restricting origins to expected local URLs (localhost:3000, 3001, 8000, 8001).
 
-### Cross-Origin Resource Sharing (CORS)
-- Removed custom unsafe CORS headers middleware.
-- Only utilizing FastAPI's official `CORSMiddleware` with explicit configuration bound by environment variables (`CORS_ORIGINS`).
+## 4. Infrastructure Configurations
+- **Status**: Secure
+- **Findings**: Dockerfiles are well-structured, utilizing lightweight base images (`python:3.10-slim`). The system runs on isolated networks (`storytelling-net`) limiting internal service exposure.
+- **Secrets Management**: API Keys (Mistral, OpenAI) are handled via environment variables and loaded into `Settings`, keeping them out of source control.
 
-### Injection Prevention
-- All database interactions use SQLAlchemy ORM or the `session.execute` pattern with parameterized queries, preventing SQL injection natively.
-
-## Performance Optimizations
-
-### N+1 Query Fixes
-- `get_project_stats` API has been optimized to execute SQL aggregations (`func.count`, `func.sum`) directly at the database level rather than fetching nested related rows or returning placeholders.
-
-### Frontend (Angular)
-- Bundle sizes are constrained by Angular CLI budgets (Warning: 500kB, Error: 1MB).
-- Strict AOT and Optimization are utilized.
-- Component lazy-loading is natively implemented (`app.routes.ts` uses `loadChildren`).
+## 5. AI / LLM boundaries
+- **Status**: Secure
+- **Findings**: External AI requests are made directly from the backend (or worker), preventing frontend key exposure.

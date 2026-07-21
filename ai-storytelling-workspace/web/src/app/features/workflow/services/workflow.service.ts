@@ -161,36 +161,59 @@ export class WorkflowService {
     });
   }
 
-  private handleWebSocketMessage(msg: WebSocketMessage): void {
+  private handleWebSocketMessage(msg: any): void {
     const currentState = this.stateSubject.value;
+    const timestamp = msg.timestamp || new Date().toISOString();
+    const timeStr = new Date(timestamp).toLocaleTimeString();
     
+    // Map backend payload to frontend state
+    const newState: Partial<WorkflowState> = {};
+    if (msg.status) newState.status = msg.status as any;
+    if (msg.phase) newState.current_phase = msg.phase;
+    if (msg.agent) newState.current_agent = msg.agent;
+    if (msg.progress !== undefined) newState.progress = msg.progress;
+    if (msg.error_message) newState.error_message = msg.error_message;
+
     switch (msg.type) {
-      case 'workflow_update':
-        if (msg.data) {
-          this.updateState(msg.data);
+      case 'connected':
+        if (msg.message) {
+          newState.logs = [...currentState.logs, `[${timeStr}] ${msg.message}`];
         }
+        this.updateState(newState);
         break;
+        
+      case 'progress':
+      case 'status':
+      case 'workflow_update':
+        if (msg.message) {
+          newState.logs = [...currentState.logs, `[${timeStr}] ${msg.message}`];
+        }
+        this.updateState(newState);
+        break;
+        
       case 'log':
-        if (msg.data?.message) {
-          const timestamp = msg.timestamp || new Date().toISOString();
-          const logEntry = `[${new Date(timestamp).toLocaleTimeString()}] ${msg.data.message}`;
+        if (msg.message || (msg.data && msg.data.message)) {
+          const text = msg.message || msg.data.message;
           this.stateSubject.next({
             ...currentState,
-            logs: [...currentState.logs, logEntry]
+            logs: [...currentState.logs, `[${timeStr}] ${text}`]
           });
         }
         break;
+        
       case 'error':
-        // Handle explicit error messages from the backend
-        const errorMsg = msg.data?.message || msg.data?.error || 'An unknown error occurred';
-        const errorTimestamp = msg.timestamp || new Date().toISOString();
-        const errorLog = `[${new Date(errorTimestamp).toLocaleTimeString()}] ERROR: ${errorMsg}`;
-        this.stateSubject.next({
-          ...currentState,
-          status: 'failed',
-          error_message: errorMsg,
-          logs: [...currentState.logs, errorLog]
-        });
+        const errorMsg = msg.error_message || msg.message || (msg.data && (msg.data.message || msg.data.error)) || 'An unknown error occurred';
+        newState.status = 'failed';
+        newState.error_message = errorMsg;
+        newState.logs = [...currentState.logs, `[${timeStr}] ERROR: ${errorMsg}`];
+        this.updateState(newState);
+        break;
+        
+      case 'checkpoint':
+        if (msg.message) {
+          newState.logs = [...currentState.logs, `[${timeStr}] CHECKPOINT: ${msg.message}`];
+        }
+        this.updateState(newState);
         break;
     }
   }

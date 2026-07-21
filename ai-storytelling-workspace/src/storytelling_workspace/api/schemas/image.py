@@ -21,7 +21,7 @@ class ImageResponse(BaseModel):
     ] = Field(..., description="Type of image")
     file_path: str = Field(..., description="File path relative to storage root")
     file_size: int = Field(..., ge=0, description="File size in bytes")
-    prompt: str = Field(..., description="Generation prompt used")
+    prompt: str = Field(..., min_length=3, description="Detailed prompt for image generation")
     model: str = Field(..., description="AI model used for generation")
     provider: str = Field(..., description="AI provider (pixtral, dall-e-3)")
     width: int = Field(..., ge=1, description="Image width in pixels")
@@ -126,7 +126,7 @@ class ImageGenerationRequest(BaseModel):
     project_id: UUID = Field(..., description="Project UUID")
     prompt: str = Field(
         ...,
-        min_length=10,
+        min_length=3,
         max_length=2000,
         description="Generation prompt"
     )

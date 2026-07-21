@@ -125,13 +125,13 @@ class DevelopmentalEditorAgent(AIAgent):
         # Add chapter summaries
         if bible.chapters:
             parts.append(f"\nChapters ({len(bible.chapters)} total):")
-            for chapter in bible.chapters[:10]:  # First 10 chapters
+            for chapter in bible.get_chapters_in_order()[:10]:  # First 10 chapters
                 parts.append(f"- Ch{chapter.number}: {chapter.title} - {chapter.goal}")
         
         # Add character info
         if bible.characters:
             parts.append(f"\nMain Characters:")
-            for char in bible.characters[:3]:
+            for char in list(bible.characters.values())[:3]:
                 parts.append(f"- {char.name} ({char.role}): {char.arc}")
         
         return "\n".join(parts)

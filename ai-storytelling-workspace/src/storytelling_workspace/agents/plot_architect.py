@@ -123,7 +123,7 @@ class PlotArchitectAgent(AIAgent):
             return "Characters to be determined"
         
         summaries = []
-        for char in bible.characters[:5]:  # Top 5 characters
+        for char in list(bible.characters.values())[:5]:  # Top 5 characters
             summary = f"{char.name} ({char.role})"
             if char.goals:
                 summary += f": {char.goals[0]}"

@@ -127,7 +127,7 @@ class CharacterAgent(AIAgent):
             summary_parts.append(f"Society: {bible.world_rules.social_structure}")
         
         if bible.locations:
-            locations = ", ".join([loc.name for loc in bible.locations[:3]])
+            locations = ", ".join([loc.name for loc in list(bible.locations.values())[:3]])
             summary_parts.append(f"Key locations: {locations}")
         
         return "; ".join(summary_parts) if summary_parts else "World details to be determined"

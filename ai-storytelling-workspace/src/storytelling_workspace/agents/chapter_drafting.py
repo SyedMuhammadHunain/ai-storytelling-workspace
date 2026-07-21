@@ -186,7 +186,7 @@ class ChapterDraftingAgent(AIAgent):
             Character information string
         """
         # Find character in bible
-        for char in bible.characters:
+        for char in bible.characters.values():
             if char.name.lower() == character_name.lower():
                 info_parts = [
                     f"Name: {char.name}",

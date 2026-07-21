@@ -87,7 +87,7 @@ import { ProjectImage } from '../../models/image.model';
             </div>
           }
 
-          @for (img of images(); track img.url) {
+          @for (img of images(); track img.id) {
             <mat-card class="image-card">
               <img mat-card-image [src]="img.url" [alt]="img.prompt" class="gallery-img">
               <mat-card-content class="image-content">

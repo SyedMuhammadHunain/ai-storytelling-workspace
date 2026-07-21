@@ -125,7 +125,7 @@ class ContinuityAgent(AIAgent):
             return "No chapters available for review."
         
         chapters_parts = []
-        for chapter in bible.chapters[:10]:  # Check first 10 chapters
+        for chapter in bible.get_chapters_in_order()[:10]:  # Check first 10 chapters
             if chapter.content:
                 # Include first 500 words of each chapter
                 words = chapter.content.split()[:500]
@@ -142,7 +142,7 @@ class ContinuityAgent(AIAgent):
             return "No characters defined."
         
         char_parts = []
-        for char in bible.characters:
+        for char in bible.characters.values():
             char_parts.append(
                 f"{char.name} ({char.role}): {char.physical_description}"
             )

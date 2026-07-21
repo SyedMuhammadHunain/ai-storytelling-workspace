@@ -119,9 +119,15 @@ class AgentTask(BaseTask):
                 module = importlib.import_module(mod_name)
                 agent_cls = getattr(module, cls_name)
                 try:
-                    agent = agent_cls(ai_provider=ai_provider)
+                    if agent_name == "chapter_drafting":
+                        agent = agent_cls(chapter_number=context.get("chapter_number", 1), ai_provider=ai_provider)
+                    else:
+                        agent = agent_cls(ai_provider=ai_provider)
                 except TypeError:
-                    agent = agent_cls()
+                    if agent_name == "chapter_drafting":
+                        agent = agent_cls(chapter_number=context.get("chapter_number", 1))
+                    else:
+                        agent = agent_cls()
             else:
                 raise ValueError(f"Unknown agent: {agent_name}")
                 

@@ -145,7 +145,7 @@ class DialogueVoiceAgent(AIAgent):
         
         # Check for character names in content
         if chapter.content:
-            for char in bible.characters:
+            for char in bible.characters.values():
                 if char.name in chapter.content:
                     if char.name not in characters:
                         characters.append(char.name)
