@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -44,14 +44,14 @@ import { StoryBible } from '../../models/bible.model';
               <!-- Characters Tab -->
               <mat-tab label="Characters">
                 <div class="tab-content">
-                  @if (!bible.characters || bible.characters.length === 0) {
+                  @if (characters().length === 0) {
                     <div class="empty-state">
                       <p>No characters generated yet.</p>
                     </div>
                   }
                   
                   <mat-accordion>
-                    @for (char of bible.characters; track char.name) {
+                    @for (char of characters(); track char.name) {
                       <mat-expansion-panel>
                         <mat-expansion-panel-header>
                           <mat-panel-title>
@@ -77,14 +77,14 @@ import { StoryBible } from '../../models/bible.model';
               <!-- Locations Tab -->
               <mat-tab label="Locations">
                 <div class="tab-content">
-                  @if (!bible.locations || bible.locations.length === 0) {
+                  @if (locations().length === 0) {
                     <div class="empty-state">
                       <p>No locations generated yet.</p>
                     </div>
                   }
 
                   <mat-accordion>
-                    @for (loc of bible.locations; track loc.name) {
+                    @for (loc of locations(); track loc.name) {
                       <mat-expansion-panel>
                         <mat-expansion-panel-header>
                           <mat-panel-title>
@@ -107,14 +107,14 @@ import { StoryBible } from '../../models/bible.model';
               <!-- Plot Threads Tab -->
               <mat-tab label="Plot Threads">
                 <div class="tab-content">
-                  @if (!bible.plot_threads || bible.plot_threads.length === 0) {
+                  @if (plotThreads().length === 0) {
                     <div class="empty-state">
                       <p>No plot threads generated yet.</p>
                     </div>
                   }
 
                   <mat-accordion>
-                    @for (thread of bible.plot_threads; track thread.name) {
+                    @for (thread of plotThreads(); track thread.name) {
                       <mat-expansion-panel>
                         <mat-expansion-panel-header>
                           <mat-panel-title>
@@ -138,14 +138,14 @@ import { StoryBible } from '../../models/bible.model';
               <!-- Timeline Tab -->
               <mat-tab label="Timeline">
                 <div class="tab-content">
-                  @if (!bible.timeline || bible.timeline.length === 0) {
+                  @if (timeline().length === 0) {
                     <div class="empty-state">
                       <p>No timeline events generated yet.</p>
                     </div>
                   }
 
                   <mat-list>
-                    @for (event of bible.timeline; track event.event) {
+                    @for (event of timeline(); track event.event) {
                       <mat-list-item class="timeline-item">
                         <span matListItemTitle><strong>{{ event.date || 'Event' }}</strong>: {{ event.event }}</span>
                         <span matListItemLine class="multiline-text">{{ event.description }}</span>
@@ -158,14 +158,14 @@ import { StoryBible } from '../../models/bible.model';
               <!-- Lore Tab -->
               <mat-tab label="Lore">
                 <div class="tab-content">
-                  @if (!bible.lore || bible.lore.length === 0) {
+                  @if (lore().length === 0) {
                     <div class="empty-state">
                       <p>No lore generated yet.</p>
                     </div>
                   }
 
                   <mat-accordion>
-                    @for (item of bible.lore; track item.topic) {
+                    @for (item of lore(); track item.topic) {
                       <mat-expansion-panel>
                         <mat-expansion-panel-header>
                           <mat-panel-title>
@@ -249,6 +249,41 @@ import { StoryBible } from '../../models/bible.model';
 export class StoryBibleComponent implements OnInit {
   projectId = signal<string>('');
   bible = signal<StoryBible | undefined>(undefined);
+
+  characters = computed(() => {
+    const b = this.bible() as any;
+    if (!b || !b.characters) return [];
+    return Array.isArray(b.characters) ? b.characters : Object.values(b.characters);
+  });
+
+  locations = computed(() => {
+    const b = this.bible() as any;
+    if (!b || !b.locations) return [];
+    return Array.isArray(b.locations) ? b.locations : Object.values(b.locations);
+  });
+
+  plotThreads = computed(() => {
+    const b = this.bible() as any;
+    if (!b || !b.plot_threads) return [];
+    return Array.isArray(b.plot_threads) ? b.plot_threads : Object.values(b.plot_threads);
+  });
+
+  timeline = computed(() => {
+    const b = this.bible() as any;
+    if (!b || !b.timeline) return [];
+    return Array.isArray(b.timeline) ? b.timeline : Object.values(b.timeline);
+  });
+
+  lore = computed(() => {
+    const b = this.bible() as any;
+    const data = b?.lore || b?.terminology;
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    return Object.entries(data).map(([topic, description]) => ({
+      topic,
+      description: Array.isArray(description) ? (description as string[]).join(', ') : String(description)
+    }));
+  });
 
   private route = inject(ActivatedRoute);
   private router = inject(Router);

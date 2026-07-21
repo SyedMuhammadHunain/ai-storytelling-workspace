@@ -68,13 +68,28 @@ async def get_image(
 )
 async def generate_image(
     request: ImageGenerationRequest,
+    image_repo: ImageRepository = Depends(get_image_repo)
 ):
-    # This would typically trigger an async celery/arq task.
-    # We return a placeholder queued status.
     import uuid
+    image_id = str(uuid.uuid4())
+    
+    # Save a placeholder image directly to the DB as completed
+    await image_repo.create(**{
+        "id": image_id,
+        "project_id": str(request.project_id) if request.project_id else None,
+        "image_type": request.image_type.value if hasattr(request.image_type, 'value') else request.image_type,
+        "prompt": request.prompt,
+        "style": request.style,
+        "file_path": "assets/placeholder.png",
+        "status": "completed",
+        "provider": "dummy",
+        "model_used": "dummy-model",
+        "generation_cost": 0.0
+    })
+
     return ImageGenerationResponse(
-        image_id=uuid.uuid4(),
-        status="queued",
-        message="Image generation task queued successfully",
-        estimated_time_seconds=30
+        image_id=uuid.UUID(image_id),
+        status="completed",
+        message="Image generated successfully (using placeholder)",
+        estimated_time_seconds=0
     )
